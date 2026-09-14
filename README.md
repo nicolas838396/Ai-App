@@ -53,7 +53,7 @@ pnpm install
 # 3. Env-Dateien anlegen
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
-# In apps/api/.env: SUPABASE_URL, SUPABASE_JWT_SECRET, ANTHROPIC_API_KEY eintragen
+# In apps/api/.env: DATABASE_URL, SUPABASE_URL, ANTHROPIC_API_KEY eintragen
 # In apps/web/.env.local: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY eintragen
 
 # 4. Datenbank-Schema anwenden + Beispiel-Aktivitäten seeden
@@ -67,7 +67,7 @@ pnpm dev
 - Web: http://localhost:3000
 - API: http://localhost:4000/api/health
 
-Für Supabase-Werte: kostenloses Projekt auf https://supabase.com anlegen, `SUPABASE_JWT_SECRET` unter Project Settings → API → JWT Settings kopieren.
+Für Supabase-Werte: kostenloses Projekt auf https://supabase.com anlegen. `DATABASE_URL` unter Project Settings → Database (Connect-Dialog) kopieren, `SUPABASE_URL` unter Project Settings → API.
 Für `ANTHROPIC_API_KEY`: API-Key unter https://console.anthropic.com erstellen.
 
 ## Deployment (Kurzfassung)

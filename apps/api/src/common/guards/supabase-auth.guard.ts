@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import type { Request } from "express";
 
 export interface AuthenticatedUser {
@@ -13,9 +13,19 @@ export interface AuthenticatedUser {
   email?: string;
 }
 
-// Supabase signs access tokens with HS256 using the project's JWT secret.
-// Verifying it here means the API never needs to call out to Supabase to
-// authenticate a request.
+// Newer Supabase projects sign access tokens with an asymmetric key
+// (ECC/RSA) instead of a shared HS256 secret. We verify against the
+// project's public JWKS endpoint, so the API never needs a shared secret
+// and never has to call out to Supabase per request (jose caches the keys).
+let cachedJwks: JWTVerifyGetKey | null = null;
+
+function getJwks(supabaseUrl: string): JWTVerifyGetKey {
+  if (!cachedJwks) {
+    cachedJwks = createRemoteJWKSet(new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`));
+  }
+  return cachedJwks;
+}
+
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
   constructor(private readonly configService: ConfigService) {}
@@ -29,13 +39,13 @@ export class SupabaseAuthGuard implements CanActivate {
     }
 
     const token = authHeader.slice("Bearer ".length);
-    const secret = this.configService.get<string>("SUPABASE_JWT_SECRET");
-    if (!secret) {
+    const supabaseUrl = this.configService.get<string>("SUPABASE_URL");
+    if (!supabaseUrl) {
       throw new UnauthorizedException("Auth is not configured");
     }
 
     try {
-      const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+      const { payload } = await jwtVerify(token, getJwks(supabaseUrl));
       const user: AuthenticatedUser = {
         id: String(payload.sub),
         email: typeof payload.email === "string" ? payload.email : undefined,

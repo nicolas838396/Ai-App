@@ -5,7 +5,6 @@ describe("validateEnv", () => {
     DATABASE_URL: "postgresql://app:app@localhost:5432/mentalhealth",
     REDIS_URL: "redis://localhost:6379",
     SUPABASE_URL: "https://example.supabase.co",
-    SUPABASE_JWT_SECRET: "secret",
     ANTHROPIC_API_KEY: "sk-ant-test",
   };
 
