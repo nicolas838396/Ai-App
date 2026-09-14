@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Mirrors the Supabase auth.users row for the same id. We keep our own
+// User table so we can attach app data via foreign keys without reaching
+// into the auth schema directly.
+model User {
+  id        String   @id
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  moodEntries    MoodEntry[]
+  journalEntries JournalEntry[]
+  activityLogs   ActivityLog[]
+  conversations  ChatConversation[]
+
+  @@map("users")
+}
+
+model MoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Int
+  note      String?
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("mood_entries")
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("journal_entries")
+}
+
+model Activity {
+  id       String        @id @default(cuid())
+  name     String        @unique
+  category String
+  logs     ActivityLog[]
+
+  @@map("activities")
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId  String
+  activity    Activity @relation(fields: [activityId], references: [id])
+  durationMin Int?
+  occurredAt  DateTime @default(now())
+
+  @@index([userId, occurredAt])
+  @@map("activity_logs")
+}
+
+model ChatConversation {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  createdAt DateTime      @default(now())
+  messages  ChatMessage[]
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
