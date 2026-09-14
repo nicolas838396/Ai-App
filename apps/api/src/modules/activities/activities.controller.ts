@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { SupabaseAuthGuard } from "../../common/guards/supabase-auth.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/guards/supabase-auth.guard";
@@ -28,6 +28,11 @@ export class ActivitiesController {
   @Get("log")
   findLogs(@CurrentUser() user: AuthenticatedUser) {
     return this.activitiesService.findLogsForUser(user.id);
+  }
+
+  @Delete("log/:id")
+  deleteLog(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.activitiesService.deleteLog(user.id, id);
   }
 
   @Get("correlation")

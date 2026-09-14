@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import type { CreateActivityLogDto } from "./dto/create-activity-log.dto";
 
@@ -25,6 +25,13 @@ export class ActivitiesService {
         durationMin: dto.durationMin,
       },
     });
+  }
+
+  async deleteLog(userId: string, logId: string) {
+    const log = await this.prisma.activityLog.findUnique({ where: { id: logId } });
+    if (!log) throw new NotFoundException("Activity log not found");
+    if (log.userId !== userId) throw new ForbiddenException();
+    await this.prisma.activityLog.delete({ where: { id: logId } });
   }
 
   findLogsForUser(userId: string) {
