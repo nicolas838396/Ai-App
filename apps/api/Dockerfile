@@ -11,6 +11,7 @@ RUN pnpm install --frozen-lockfile --filter api...
 
 FROM base AS build
 COPY --from=deps /repo /repo
+COPY tsconfig.base.json tsconfig.base.json
 COPY packages/shared packages/shared
 COPY apps/api apps/api
 RUN pnpm --filter @mental-health/shared build || true
