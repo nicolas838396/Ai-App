@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM node:20-alpine AS base
 RUN corepack enable
+RUN apk add --no-cache openssl
 WORKDIR /repo
 
 FROM base AS deps
@@ -20,6 +21,7 @@ RUN pnpm --filter api build
 
 FROM node:20-alpine AS runner
 RUN corepack enable
+RUN apk add --no-cache openssl
 WORKDIR /repo
 ENV NODE_ENV=production
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
