@@ -37,7 +37,7 @@ const FEATURE_CARDS = [
 ];
 
 export default function DashboardPage() {
-  const { loading: sessionLoading } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +49,7 @@ export default function DashboardPage() {
       .catch(() => setError("Backend nicht erreichbar"));
   }, []);
 
-  if (sessionLoading) return null;
+  if (sessionLoading || !session) return null;
 
   return (
     <>

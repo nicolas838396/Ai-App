@@ -77,7 +77,7 @@ export default function ChatPage() {
     }
   }
 
-  if (sessionLoading) return null;
+  if (sessionLoading || !session) return null;
 
   return (
     <>

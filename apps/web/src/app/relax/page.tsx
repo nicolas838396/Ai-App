@@ -15,7 +15,7 @@ const SOUNDS: { id: SoundId; label: string; icon: typeof CloudRain }[] = [
 ];
 
 export default function RelaxPage() {
-  const { loading: sessionLoading } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
   const [activeSoundId, setActiveSoundId] = useState<SoundId | null>(null);
   const [volume, setVolume] = useState(0.4);
   const activeSoundRef = useRef<ActiveSound | null>(null);
@@ -41,7 +41,7 @@ export default function RelaxPage() {
     activeSoundRef.current?.setVolume(value);
   }
 
-  if (sessionLoading) return null;
+  if (sessionLoading || !session) return null;
 
   return (
     <>
