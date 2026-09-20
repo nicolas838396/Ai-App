@@ -15,6 +15,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // without real credentials; actual auth calls will simply fail until the
 // real env vars are set.
 export const supabase = createClient(
-  supabaseUrl ?? "https://placeholder.supabase.co",
-  supabaseAnonKey ?? "placeholder-anon-key",
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-anon-key",
 );
