@@ -8,7 +8,11 @@ export const envSchema = z.object({
   SUPABASE_URL: z.string().url(),
   ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required"),
   ANTHROPIC_MODEL: z.string().min(1).default("claude-sonnet-5"),
-  CORS_ORIGIN: z.string().min(1).default("http://localhost:3000"),
+  CORS_ORIGIN: z
+    .string()
+    .trim()
+    .min(1)
+    .default("http://localhost:3000"),
 });
 
 export type Env = z.infer<typeof envSchema>;
