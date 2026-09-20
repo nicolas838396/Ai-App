@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Send, Sparkles, User } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
@@ -81,32 +82,64 @@ export default function ChatPage() {
   return (
     <>
       <AppNav />
-      <main className="mx-auto flex max-w-2xl flex-col px-6 py-8" style={{ height: "calc(100vh - 65px)" }}>
-        <h1 className="text-xl font-semibold text-brand-700">KI-Begleiter</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Ein Gespräch, kein Ersatz für Therapie. Bei akuten Krisen wende dich bitte an professionelle Hilfe.
-        </p>
+      <main
+        className="mx-auto flex max-w-2xl flex-col px-6 py-6"
+        style={{ height: "calc(100vh - 65px)" }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500 text-white">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <div>
+            <h1 className="text-lg font-bold text-slate-800">KI-Begleiter</h1>
+            <p className="text-xs text-slate-500">
+              Kein Ersatz für Therapie – bei akuten Krisen wende dich an professionelle Hilfe.
+            </p>
+          </div>
+        </div>
 
-        <div className="mt-4 flex-1 space-y-3 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
+        <div className="mt-4 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
           {loadingHistory && <p className="text-sm text-slate-400">Lade Verlauf…</p>}
           {!loadingHistory && messages.length === 0 && (
-            <p className="text-sm text-slate-400">
-              Schreib etwas, das dich gerade beschäftigt – ich bin da, um zuzuhören.
-            </p>
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-slate-400">
+              <Sparkles className="h-8 w-8 text-brand-200" />
+              <p className="max-w-xs text-sm">
+                Schreib etwas, das dich gerade beschäftigt – ich bin da, um zuzuhören.
+              </p>
+            </div>
           )}
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                message.role === "user"
-                  ? "ml-auto bg-brand-500 text-white"
-                  : "bg-slate-100 text-slate-800"
-              }`}
+              className={`flex items-end gap-2 ${message.role === "user" ? "flex-row-reverse" : ""}`}
             >
-              {message.content}
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                  message.role === "user" ? "bg-slate-200 text-slate-600" : "bg-brand-500 text-white"
+                }`}
+              >
+                {message.role === "user" ? <User className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+              </span>
+              <div
+                className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  message.role === "user"
+                    ? "rounded-br-sm bg-brand-500 text-white"
+                    : "rounded-bl-sm bg-sand-100 text-slate-700"
+                }`}
+              >
+                {message.content}
+              </div>
             </div>
           ))}
-          {sending && <p className="text-sm text-slate-400">Der Begleiter tippt…</p>}
+          {sending && (
+            <div className="flex items-center gap-2 pl-9 text-sm text-slate-400">
+              <span className="flex gap-1">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-300 [animation-delay:-0.3s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-300 [animation-delay:-0.15s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-300" />
+              </span>
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 
@@ -117,14 +150,14 @@ export default function ChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Schreib etwas…"
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2"
+            className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm shadow-soft"
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="rounded-md bg-brand-500 px-4 py-2 font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
           >
-            Senden
+            <Send className="h-4 w-4" />
           </button>
         </form>
       </main>

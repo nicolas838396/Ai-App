@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+}
+
 body {
-  @apply bg-brand-50 text-slate-800;
+  @apply bg-sand-50 text-slate-700 antialiased;
+  font-family: var(--font-nunito), system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-extrabold tracking-tight text-slate-800;
+}
+
+::selection {
+  @apply bg-brand-200 text-brand-900;
+}
+
+input,
+textarea {
+  @apply outline-none transition focus:ring-2 focus:ring-brand-300;
 }
