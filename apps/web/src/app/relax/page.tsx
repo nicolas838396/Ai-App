@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CloudRain, Waves, Wind as WindIcon, AudioLines, Square } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
+import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { BreathingExercise } from "@/components/BreathingExercise";
 import { useSession } from "@/lib/useSession";
 import { playSound, type ActiveSound, type SoundId } from "@/lib/ambientSounds";
@@ -15,7 +16,7 @@ const SOUNDS: { id: SoundId; label: string; icon: typeof CloudRain }[] = [
 ];
 
 export default function RelaxPage() {
-  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading, slow } = useSession({ requireAuth: true });
   const [activeSoundId, setActiveSoundId] = useState<SoundId | null>(null);
   const [volume, setVolume] = useState(0.4);
   const activeSoundRef = useRef<ActiveSound | null>(null);
@@ -41,7 +42,9 @@ export default function RelaxPage() {
     activeSoundRef.current?.setVolume(value);
   }
 
-  if (sessionLoading || !session) return null;
+  if (sessionLoading || !session) {
+    return <FullscreenLoader label={slow ? "Server wacht gerade auf, das kann etwas dauern…" : "Einen Moment…"} />;
+  }
 
   return (
     <>

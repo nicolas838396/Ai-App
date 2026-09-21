@@ -43,7 +43,7 @@ export default function LoginPage() {
       router.push("/dashboard");
       return;
     }
-    setInfo("Konto erstellt. Falls eine Bestätigungs-E-Mail nötig ist, prüf dein Postfach und melde dich danach an.");
+    setInfo("Wir haben dir eine Bestätigungs-E-Mail geschickt. Bitte bestätige sie, dann kannst du dich hier anmelden.");
     setMode("login");
   }
 

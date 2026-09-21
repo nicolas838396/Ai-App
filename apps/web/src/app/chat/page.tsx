@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Send, Sparkles, User } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
+import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
 
@@ -20,7 +21,7 @@ interface ChatConversation {
 }
 
 export default function ChatPage() {
-  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading, slow } = useSession({ requireAuth: true });
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -77,7 +78,9 @@ export default function ChatPage() {
     }
   }
 
-  if (sessionLoading || !session) return null;
+  if (sessionLoading || !session) {
+    return <FullscreenLoader label={slow ? "Server wacht gerade auf, das kann etwas dauern…" : "Einen Moment…"} />;
+  }
 
   return (
     <>

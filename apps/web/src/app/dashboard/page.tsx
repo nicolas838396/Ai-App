@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MessageCircleHeart, NotebookPen, Wind, CircleCheck, CircleAlert } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
+import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
 
 interface HealthStatus {
@@ -37,7 +38,7 @@ const FEATURE_CARDS = [
 ];
 
 export default function DashboardPage() {
-  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading, slow } = useSession({ requireAuth: true });
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +50,9 @@ export default function DashboardPage() {
       .catch(() => setError("Backend nicht erreichbar"));
   }, []);
 
-  if (sessionLoading || !session) return null;
+  if (sessionLoading || !session) {
+    return <FullscreenLoader label={slow ? "Server wacht gerade auf, das kann etwas dauern…" : "Einen Moment…"} />;
+  }
 
   return (
     <>

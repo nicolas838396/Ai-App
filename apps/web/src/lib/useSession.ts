@@ -20,10 +20,13 @@ function sleep(ms: number) {
 // after a deploy or idle period can take up to ~50s to wake it back up. A
 // single failed check here shouldn't let someone through onboarding
 // permanently, so retry with backoff before giving up.
-async function fetchProfileWithRetries(): Promise<{ onboardingCompletedAt: string | null }> {
+async function fetchProfileWithRetries(
+  onSlow: () => void,
+): Promise<{ onboardingCompletedAt: string | null }> {
   const delaysMs = [0, 3000, 8000, 15000];
   let lastError: unknown;
-  for (const delay of delaysMs) {
+  for (const [index, delay] of delaysMs.entries()) {
+    if (index === 1) onSlow();
     if (delay > 0) await sleep(delay);
     try {
       return await apiFetch<{ onboardingCompletedAt: string | null }>("/users/me");
@@ -38,6 +41,7 @@ export function useSession(options: UseSessionOptions = {}) {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,7 +58,9 @@ export function useSession(options: UseSessionOptions = {}) {
 
       if (newSession && options.requireAuth && !options.skipOnboardingCheck) {
         try {
-          const profile = await fetchProfileWithRetries();
+          const profile = await fetchProfileWithRetries(() => {
+            if (!cancelled) setSlow(true);
+          });
           if (cancelled) return;
           if (!profile.onboardingCompletedAt) {
             setLoading(false);
@@ -86,5 +92,5 @@ export function useSession(options: UseSessionOptions = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { session, loading };
+  return { session, loading, slow };
 }

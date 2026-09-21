@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
 import { useSession } from "@/lib/useSession";
+import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { apiFetch } from "@/lib/apiClient";
 import {
   GOAL_OPTIONS,
@@ -152,7 +153,7 @@ export default function OnboardingPage() {
     }
   }
 
-  if (sessionLoading || !session || loadingProfile) return null;
+  if (sessionLoading || !session || loadingProfile) return <FullscreenLoader />;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-hero-gradient px-6 py-10">

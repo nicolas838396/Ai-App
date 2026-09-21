@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Smile, ListChecks, PenLine } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
+import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
 
@@ -39,7 +40,7 @@ function isToday(isoDate: string) {
 const MOOD_EMOJI = ["😞", "😕", "😐", "🙂", "😊", "😄", "😁", "🤩", "🥳", "✨"];
 
 export default function JournalPage() {
-  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading, slow } = useSession({ requireAuth: true });
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [todaysLogs, setTodaysLogs] = useState<ActivityLog[]>([]);
@@ -118,7 +119,9 @@ export default function JournalPage() {
     }
   }
 
-  if (sessionLoading || !session) return null;
+  if (sessionLoading || !session) {
+    return <FullscreenLoader label={slow ? "Server wacht gerade auf, das kann etwas dauern…" : "Einen Moment…"} />;
+  }
 
   return (
     <>
