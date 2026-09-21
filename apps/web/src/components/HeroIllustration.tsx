@@ -1,62 +1,123 @@
-// A warm, schematic illustration of two people talking, standing in for a
-// photo-realistic hero image (this environment has no image-generation
-// tool available). Built as inline SVG so the primary figure's color
-// follows the user's chosen color theme via the same `fill-brand-*`
-// Tailwind utilities used everywhere else in the app.
+// A warm illustration of two people talking, standing in for a photo (this
+// environment has no image-generation tool available). Hand-built inline
+// SVG in a flat, friendly character-illustration style. Clothing colors
+// follow the user's chosen theme via `fill-brand-*`/`fill-calm-*`; skin,
+// hair, and the bench stay fixed, natural tones regardless of theme.
 export function HeroIllustration({ className }: { className?: string }) {
+  const SKIN_A = "#f0c9a0";
+  const SKIN_B = "#c9875a";
+  const HAIR_A = "#6b4530";
+  const HAIR_B = "#241d1a";
+
   return (
-    <svg viewBox="0 0 480 320" className={className} role="img" aria-hidden="true">
-      {/* soft ground shadow */}
-      <ellipse cx="240" cy="282" rx="190" ry="22" className="fill-sand-200" opacity={0.7} />
+    <svg viewBox="0 0 480 300" className={className} role="img" aria-hidden="true">
+      <ellipse cx="240" cy="280" rx="185" ry="14" className="fill-sand-200" opacity={0.6} />
 
-      {/* floating sparkle accents */}
-      <path
-        d="M 60 70 L 66 84 L 80 90 L 66 96 L 60 110 L 54 96 L 40 90 L 54 84 Z"
-        className="fill-brand-200"
-      />
-      <path
-        d="M 420 50 L 424 60 L 434 64 L 424 68 L 420 78 L 416 68 L 406 64 L 416 60 Z"
-        className="fill-calm-200"
-      />
-      <circle cx="410" cy="120" r="5" className="fill-brand-300" />
-      <circle cx="45" cy="160" r="4" className="fill-calm-300" />
+      {/* sparkle accents */}
+      <path d="M 52 66 L 57 78 L 69 83 L 57 88 L 52 100 L 47 88 L 35 83 L 47 78 Z" className="fill-brand-200" />
+      <path d="M 428 46 L 431 55 L 440 58 L 431 61 L 428 70 L 425 61 L 416 58 L 425 55 Z" className="fill-calm-200" />
+      <circle cx="418" cy="110" r="5" className="fill-brand-300" />
+      <circle cx="38" cy="150" r="4" className="fill-calm-300" />
 
-      {/* connecting speech bubble */}
-      <g transform="translate(196, 40)">
-        <rect x="0" y="0" width="88" height="52" rx="22" className="fill-brand-500" />
-        <path d="M 30 50 L 22 66 L 44 50 Z" className="fill-brand-500" />
-        <circle cx="28" cy="26" r="6" className="fill-white" />
-        <circle cx="44" cy="26" r="6" className="fill-white" opacity={0.85} />
-        <circle cx="60" cy="26" r="6" className="fill-white" opacity={0.7} />
+      {/* speech bubble */}
+      <g transform="translate(198, 6)">
+        <rect x="0" y="0" width="84" height="48" rx="20" className="fill-brand-500" />
+        <path d="M 28 46 L 21 61 L 42 46 Z" className="fill-brand-500" />
+        <circle cx="26" cy="24" r="5.5" className="fill-white" />
+        <circle cx="42" cy="24" r="5.5" className="fill-white" opacity={0.85} />
+        <circle cx="58" cy="24" r="5.5" className="fill-white" opacity={0.7} />
       </g>
 
-      {/* Person A (left) */}
-      <g>
-        <rect x="70" y="205" width="130" height="66" rx="33" className="fill-brand-300" />
-        <rect x="98" y="132" width="76" height="96" rx="36" className="fill-brand-400" />
-        <line x1="168" y1="165" x2="205" y2="188" strokeWidth="20" strokeLinecap="round" className="stroke-brand-400" />
-        <circle cx="212" cy="192" r="11" className="fill-brand-400" />
-        <circle cx="136" cy="108" r="34" className="fill-sand-200" />
-        <path d="M 104 100 A 34 34 0 0 1 168 96 Q 150 82 136 86 Q 118 82 104 100 Z" className="fill-brand-700" />
-        <circle cx="126" cy="110" r="3.5" className="fill-slate-700" />
-        <circle cx="146" cy="110" r="3.5" className="fill-slate-700" />
-        <path d="M 122 122 Q 136 132 150 122" fill="none" strokeWidth="3" strokeLinecap="round" className="stroke-slate-700" />
-      </g>
+      {/* bench */}
+      <rect x="70" y="204" width="340" height="18" rx="9" fill="#b08c5c" />
+      <rect x="66" y="192" width="348" height="22" rx="11" fill="#c9a876" />
 
-      {/* Person B (right) */}
+      {/* ---------- Person A (left) ---------- */}
       <g>
-        <rect x="280" y="205" width="130" height="66" rx="33" className="fill-calm-300" />
-        <rect x="306" y="132" width="76" height="96" rx="36" className="fill-calm-400" />
-        <line x1="312" y1="165" x2="275" y2="188" strokeWidth="20" strokeLinecap="round" className="stroke-calm-400" />
-        <circle cx="268" cy="192" r="11" className="fill-calm-400" />
-        <circle cx="344" cy="108" r="34" className="fill-sand-200" />
+        {/* legs */}
+        <path d="M 140 196 Q 146 230 140 266" fill="none" strokeWidth="17" strokeLinecap="round" className="stroke-slate-600" />
+        <path d="M 160 196 Q 166 230 160 266" fill="none" strokeWidth="17" strokeLinecap="round" className="stroke-slate-600" />
+        <ellipse cx="140" cy="270" rx="13" ry="7" fill="#1e293b" />
+        <ellipse cx="160" cy="270" rx="13" ry="7" fill="#1e293b" />
+
+        {/* resting arm */}
+        <path d="M 124 124 Q 116 150 126 178" fill="none" strokeWidth="15" strokeLinecap="round" className="stroke-brand-400" />
+        <circle cx="126" cy="180" r="9" fill={SKIN_A} />
+
+        {/* torso */}
+        <rect x="120" y="112" width="60" height="82" rx="26" className="fill-brand-400" />
+        <rect x="156" y="118" width="24" height="76" rx="18" fill="#000000" opacity={0.08} />
+        <path d="M 140 116 Q 150 126 160 116" fill="none" strokeWidth="3" opacity={0.5} className="stroke-brand-700" />
+
+        {/* gesture arm (reaching toward Person B) */}
+        <path d="M 176 124 Q 205 132 216 150" fill="none" strokeWidth="15" strokeLinecap="round" className="stroke-brand-400" />
+        <circle cx="218" cy="152" r="9" fill={SKIN_A} />
+
+        {/* neck + head */}
+        <rect x="141" y="100" width="18" height="18" rx="6" fill={SKIN_A} />
+        <ellipse cx="150" cy="76" rx="26" ry="28" fill={SKIN_A} />
+
+        {/* hair (shoulder-length, side part) */}
         <path
-          d="M 312 96 Q 344 68 376 96 Q 378 112 372 108 Q 344 88 316 108 Q 310 112 312 96 Z"
-          className="fill-calm-700"
+          d="M 123 70 C 120 40 134 24 150 24 C 166 24 180 38 179 66 C 179 80 172 76 170 64 C 166 46 134 44 128 62 C 126 68 125 76 123 70 Z"
+          fill={HAIR_A}
         />
-        <circle cx="334" cy="110" r="3.5" className="fill-slate-700" />
-        <circle cx="354" cy="110" r="3.5" className="fill-slate-700" />
-        <path d="M 330 122 Q 344 132 358 122" fill="none" strokeWidth="3" strokeLinecap="round" className="stroke-slate-700" />
+        <path d="M 128 60 Q 140 50 150 52" fill="none" strokeWidth="2" opacity={0.35} stroke="#3d2818" strokeLinecap="round" />
+
+        {/* face */}
+        <path d="M 136 68 Q 141 64 146 68" fill="none" strokeWidth="2" className="stroke-slate-700" strokeLinecap="round" />
+        <path d="M 154 68 Q 159 64 164 68" fill="none" strokeWidth="2" className="stroke-slate-700" strokeLinecap="round" />
+        <ellipse cx="141" cy="76" rx="3" ry="4" className="fill-slate-800" />
+        <ellipse cx="159" cy="76" rx="3" ry="4" className="fill-slate-800" />
+        <circle cx="142.2" cy="74.5" r="1" fill="white" />
+        <circle cx="160.2" cy="74.5" r="1" fill="white" />
+        <ellipse cx="131" cy="86" rx="6" ry="4" fill="#ff8a65" opacity={0.25} />
+        <ellipse cx="169" cy="86" rx="6" ry="4" fill="#ff8a65" opacity={0.25} />
+        <path d="M 142 92 Q 150 99 158 92" fill="none" strokeWidth="2.5" className="stroke-slate-700" strokeLinecap="round" />
+      </g>
+
+      {/* ---------- Person B (right) ---------- */}
+      <g>
+        {/* legs */}
+        <path d="M 320 196 Q 314 230 320 266" fill="none" strokeWidth="17" strokeLinecap="round" className="stroke-slate-600" />
+        <path d="M 340 196 Q 334 230 340 266" fill="none" strokeWidth="17" strokeLinecap="round" className="stroke-slate-600" />
+        <ellipse cx="320" cy="270" rx="13" ry="7" fill="#1e293b" />
+        <ellipse cx="340" cy="270" rx="13" ry="7" fill="#1e293b" />
+
+        {/* resting arm */}
+        <path d="M 356 124 Q 364 150 354 178" fill="none" strokeWidth="15" strokeLinecap="round" className="stroke-calm-400" />
+        <circle cx="354" cy="180" r="9" fill={SKIN_B} />
+
+        {/* torso */}
+        <rect x="300" y="112" width="60" height="82" rx="26" className="fill-calm-400" />
+        <rect x="300" y="118" width="24" height="76" rx="18" fill="#000000" opacity={0.08} />
+        <path d="M 320 116 Q 330 126 340 116" fill="none" strokeWidth="3" opacity={0.5} className="stroke-calm-700" />
+
+        {/* gesture arm (reaching toward Person A) */}
+        <path d="M 304 124 Q 275 132 264 150" fill="none" strokeWidth="15" strokeLinecap="round" className="stroke-calm-400" />
+        <circle cx="262" cy="152" r="9" fill={SKIN_B} />
+
+        {/* neck + head */}
+        <rect x="321" y="100" width="18" height="18" rx="6" fill={SKIN_B} />
+        <ellipse cx="330" cy="76" rx="26" ry="28" fill={SKIN_B} />
+
+        {/* hair (short, cropped) */}
+        <path
+          d="M 304 66 C 303 40 316 22 330 22 C 344 22 357 40 356 66 C 350 54 340 50 330 50 C 320 50 310 54 304 66 Z"
+          fill={HAIR_B}
+        />
+        <path d="M 312 40 Q 330 30 348 40" fill="none" strokeWidth="2" opacity={0.35} stroke="#000" strokeLinecap="round" />
+
+        {/* face */}
+        <path d="M 316 68 Q 321 64 326 68" fill="none" strokeWidth="2" className="stroke-slate-700" strokeLinecap="round" />
+        <path d="M 334 68 Q 339 64 344 68" fill="none" strokeWidth="2" className="stroke-slate-700" strokeLinecap="round" />
+        <ellipse cx="321" cy="76" rx="3" ry="4" className="fill-slate-800" />
+        <ellipse cx="339" cy="76" rx="3" ry="4" className="fill-slate-800" />
+        <circle cx="322.2" cy="74.5" r="1" fill="white" />
+        <circle cx="340.2" cy="74.5" r="1" fill="white" />
+        <ellipse cx="311" cy="86" rx="6" ry="4" fill="#ff8a65" opacity={0.25} />
+        <ellipse cx="349" cy="86" rx="6" ry="4" fill="#ff8a65" opacity={0.25} />
+        <path d="M 322 92 Q 330 99 338 92" fill="none" strokeWidth="2.5" className="stroke-slate-700" strokeLinecap="round" />
       </g>
     </svg>
   );
