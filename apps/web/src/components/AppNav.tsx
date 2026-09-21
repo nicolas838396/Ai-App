@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, MessageCircleHeart, NotebookPen, Wind, LogOut, Sparkles } from "lucide-react";
+import { LayoutDashboard, MessageCircleHeart, NotebookPen, Wind, LogOut, Sparkles, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 const LINKS = [
@@ -51,13 +51,26 @@ export function AppNav() {
           })}
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-400 transition hover:bg-red-50 hover:text-red-500"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Abmelden</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/settings"
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
+              pathname === "/settings"
+                ? "bg-brand-500 text-white shadow-soft"
+                : "text-slate-400 hover:bg-sand-100 hover:text-slate-600"
+            }`}
+            aria-label="Einstellungen"
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-400 transition hover:bg-red-50 hover:text-red-500"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Abmelden</span>
+          </button>
+        </div>
       </div>
     </nav>
   );
