@@ -12,9 +12,10 @@ import { MoodCalendar } from "@/components/journal/MoodCalendar";
 import { ActivityCorrelation } from "@/components/journal/ActivityCorrelation";
 import { WeekAndStreakStats } from "@/components/journal/WeekAndStreakStats";
 import { AchievementsSection } from "@/components/achievements/AchievementsSection";
-import { AchievementUnlockToast } from "@/components/achievements/AchievementUnlockToast";
+import { AchievementCelebrationModal } from "@/components/achievements/AchievementCelebrationModal";
 import { ACHIEVEMENTS, computeStatsSnapshot, type CorrelationRowLite } from "@/lib/achievements";
 import { getStoredUnlockedIds, setStoredUnlockedIds } from "@/lib/achievementStorage";
+import { monthOverMonthChange } from "@/lib/moodAnalytics";
 
 interface ActivityLog {
   activityId: string;
@@ -62,6 +63,15 @@ export default function StatisticsPage() {
     [moodHistory, journalHistory, activityLogs, correlationRows],
   );
 
+  // Only worth bragging about if it's a real, positive swing.
+  const statLine = useMemo(() => {
+    const { percentChange } = monthOverMonthChange(moodHistory);
+    if (percentChange !== null && percentChange >= 5) {
+      return t("achievements.statLineImprovement", { percent: Math.round(percentChange) });
+    }
+    return null;
+  }, [moodHistory, t]);
+
   // Detect achievements that just became unlocked (only once the initial
   // data load is complete, so achievements don't briefly "unlock" and
   // "re-lock" as the fetches above resolve one by one) and queue a
@@ -86,7 +96,7 @@ export default function StatisticsPage() {
     <>
       <AppNav />
       {newlyUnlocked.length > 0 && (
-        <AchievementUnlockToast achievements={newlyUnlocked} onDone={() => setNewlyUnlocked([])} />
+        <AchievementCelebrationModal achievements={newlyUnlocked} statLine={statLine} onDone={() => setNewlyUnlocked([])} />
       )}
       <main className="mx-auto max-w-2xl space-y-6 px-6 py-8">
         <div className="flex items-center gap-2.5">

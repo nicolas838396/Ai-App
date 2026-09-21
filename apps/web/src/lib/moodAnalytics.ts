@@ -50,29 +50,38 @@ export interface WeekComparison {
   percentChange: number | null;
 }
 
-/** Rolling 7-day windows (not calendar weeks) so "this week" always means "the last 7 days". */
-export function weekOverWeekChange(entries: MoodEntryLite[]): WeekComparison {
+/** Rolling windows of `windowDays` (not calendar weeks/months) so "this period" always means "the last N days". */
+function rollingPeriodChange(entries: MoodEntryLite[], windowDays: number): WeekComparison {
   const DAY_MS = 24 * 60 * 60 * 1000;
   const now = Date.now();
 
-  const thisWeek: number[] = [];
-  const lastWeek: number[] = [];
+  const thisPeriod: number[] = [];
+  const lastPeriod: number[] = [];
   for (const entry of entries) {
     const age = now - new Date(entry.createdAt).getTime();
     if (age < 0) continue;
-    if (age < 7 * DAY_MS) thisWeek.push(entry.score);
-    else if (age < 14 * DAY_MS) lastWeek.push(entry.score);
+    if (age < windowDays * DAY_MS) thisPeriod.push(entry.score);
+    else if (age < 2 * windowDays * DAY_MS) lastPeriod.push(entry.score);
   }
 
   const avg = (list: number[]) => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
-  const thisWeekAvg = avg(thisWeek);
-  const lastWeekAvg = avg(lastWeek);
+  const thisWeekAvg = avg(thisPeriod);
+  const lastWeekAvg = avg(lastPeriod);
   const percentChange =
     thisWeekAvg !== null && lastWeekAvg !== null && lastWeekAvg !== 0
       ? ((thisWeekAvg - lastWeekAvg) / lastWeekAvg) * 100
       : null;
 
   return { thisWeekAvg, lastWeekAvg, percentChange };
+}
+
+export function weekOverWeekChange(entries: MoodEntryLite[]): WeekComparison {
+  return rollingPeriodChange(entries, 7);
+}
+
+/** Same idea as weekOverWeekChange, but comparing the last 30 days to the 30 before that. */
+export function monthOverMonthChange(entries: MoodEntryLite[]): WeekComparison {
+  return rollingPeriodChange(entries, 30);
 }
 
 /**

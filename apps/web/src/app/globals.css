@@ -139,3 +139,70 @@ textarea {
 .activity-pop {
   animation: tap-pop 0.35s ease-out;
 }
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10px) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(420px) translateX(var(--confetti-drift)) rotate(var(--confetti-rotate));
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  animation: confetti-fall linear infinite;
+}
+
+@keyframes celebration-medal-in {
+  0% {
+    transform: scale(0.4) rotate(-20deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.2) rotate(6deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.92) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.celebration-medal-in {
+  animation: celebration-medal-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes celebration-wreath-in {
+  0% {
+    transform: scale(0.6) rotate(-8deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.celebration-wreath-in {
+  animation: celebration-wreath-in 0.8s ease-out 0.15s both;
+}
+
+@keyframes celebration-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+.celebration-glow {
+  animation: celebration-glow-pulse 2s ease-in-out infinite;
+}

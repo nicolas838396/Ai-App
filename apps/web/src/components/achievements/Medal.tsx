@@ -3,9 +3,9 @@
 import type { LucideIcon } from "lucide-react";
 import { Lock } from "lucide-react";
 
-type Metal = "bronze" | "silver" | "gold" | "platinum";
+export type Metal = "bronze" | "silver" | "gold" | "platinum";
 
-const METAL_STYLES: Record<Metal, { ring: string; disc: string; dark: string }> = {
+export const METAL_STYLES: Record<Metal, { ring: string; disc: string; dark: string }> = {
   bronze: { ring: "#b08968", disc: "#e3b283", dark: "#8c6239" },
   silver: { ring: "#c3c9d1", disc: "#eef1f4", dark: "#9aa3ad" },
   gold: { ring: "#e8b923", disc: "#f7dd85", dark: "#c69413" },
@@ -15,7 +15,7 @@ const METAL_STYLES: Record<Metal, { ring: string; disc: string; dark: string }> 
 // Distributes a category's tiers evenly across the four medal metals, so a
 // category with 3 tiers and one with 12 tiers both read as a clear bronze
 // -> silver -> gold -> platinum progression.
-function metalForTier(tierIndex: number, tierCount: number): Metal {
+export function metalForTier(tierIndex: number, tierCount: number): Metal {
   if (tierCount <= 1) return "gold";
   const position = tierIndex / (tierCount - 1);
   if (position >= 1) return "platinum";
