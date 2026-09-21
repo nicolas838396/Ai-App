@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { PenLine } from "lucide-react";
+import { Smile, ListChecks, PenLine } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { EmotionPicker } from "@/components/journal/EmotionPicker";
+import { CategorizedActivityPicker, type Activity, type ActivityLog } from "@/components/journal/CategorizedActivityPicker";
+
+interface MoodEntry {
+  id: string;
+  score: number;
+  note?: string | null;
+  tags?: string[];
+  createdAt: string;
+}
 
 interface JournalEntry {
   id: string;
@@ -15,9 +25,26 @@ interface JournalEntry {
   createdAt: string;
 }
 
+function isToday(isoDate: string) {
+  return isoDate.slice(0, 10) === new Date().toISOString().slice(0, 10);
+}
+
+const MOOD_EMOJI = ["😞", "😕", "😐", "🙂", "😊", "😄", "😁", "🤩", "🥳", "✨"];
+
 export default function JournalPage() {
   const { session, loading: sessionLoading } = useSession({ requireAuth: true });
   const { t } = useLanguage();
+
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const [moodScore, setMoodScore] = useState(5);
+  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
+  const [moodNote, setMoodNote] = useState("");
+  const [moodSaving, setMoodSaving] = useState(false);
+  const [moodSavedAt, setMoodSavedAt] = useState<string | null>(null);
+  const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
 
   const [journalTitle, setJournalTitle] = useState("");
   const [journalContent, setJournalContent] = useState("");
@@ -26,8 +53,64 @@ export default function JournalPage() {
 
   useEffect(() => {
     if (!session) return;
+    apiFetch<Activity[]>("/activities").then(setActivities).catch(() => {});
+    apiFetch<ActivityLog[]>("/activities/log").then(setActivityLogs).catch(() => {});
+    apiFetch<MoodEntry[]>("/mood").then(setMoodHistory).catch(() => {});
     apiFetch<JournalEntry[]>("/journal").then(setJournalHistory).catch(() => {});
   }, [session]);
+
+  const todaysLogs = activityLogs.filter((log) => isToday(log.occurredAt));
+
+  function toggleEmotion(id: string) {
+    setSelectedEmotions((prev) => (prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]));
+  }
+
+  async function toggleActivity(activity: Activity) {
+    setTogglingId(activity.id);
+    const existingLog = todaysLogs.find((log) => log.activityId === activity.id);
+    try {
+      if (existingLog) {
+        await apiFetch(`/activities/log/${existingLog.id}`, { method: "DELETE" });
+        setActivityLogs((prev) => prev.filter((log) => log.id !== existingLog.id));
+      } else {
+        const newLog = await apiFetch<ActivityLog>("/activities/log", {
+          method: "POST",
+          body: JSON.stringify({ activityId: activity.id }),
+        });
+        setActivityLogs((prev) => [newLog, ...prev]);
+      }
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function logActivityByName(name: string) {
+    const activity = activities.find((a) => a.name === name);
+    if (!activity) return;
+    if (todaysLogs.some((log) => log.activityId === activity.id)) return; // already logged today
+    const newLog = await apiFetch<ActivityLog>("/activities/log", {
+      method: "POST",
+      body: JSON.stringify({ activityId: activity.id }),
+    });
+    setActivityLogs((prev) => [newLog, ...prev]);
+  }
+
+  async function handleMoodSubmit(event: FormEvent) {
+    event.preventDefault();
+    setMoodSaving(true);
+    try {
+      const entry = await apiFetch<MoodEntry>("/mood", {
+        method: "POST",
+        body: JSON.stringify({ score: moodScore, note: moodNote || undefined, tags: selectedEmotions }),
+      });
+      setMoodHistory((prev) => [entry, ...prev]);
+      setMoodNote("");
+      setSelectedEmotions([]);
+      setMoodSavedAt(new Date().toLocaleTimeString());
+    } finally {
+      setMoodSaving(false);
+    }
+  }
 
   async function handleJournalSubmit(event: FormEvent) {
     event.preventDefault();
@@ -58,6 +141,68 @@ export default function JournalPage() {
           <h1 className="text-2xl">{t("journal.title")}</h1>
           <p className="mt-1 text-sm text-slate-500">{t("journal.subtitle")}</p>
         </div>
+
+        <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <Smile className="h-[18px] w-[18px]" />
+            </span>
+            <h2 className="font-bold text-slate-800">{t("journal.emotionsTitle")}</h2>
+          </div>
+          <p className="mt-1 text-sm text-slate-500">{t("journal.emotionsSubtitle")}</p>
+
+          <div className="mt-4">
+            <EmotionPicker selected={selectedEmotions} onToggle={toggleEmotion} />
+          </div>
+
+          <form onSubmit={handleMoodSubmit} className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5">
+            <p className="text-sm font-semibold text-slate-700">{t("journal.moodQuestion")}</p>
+            <div className="flex items-center gap-4 rounded-xl bg-sand-50 px-4 py-3">
+              <span className="text-2xl">{MOOD_EMOJI[moodScore - 1]}</span>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                value={moodScore}
+                onChange={(e) => setMoodScore(Number(e.target.value))}
+                className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-brand-100 accent-brand-500"
+              />
+              <span className="w-6 text-center font-bold text-brand-700">{moodScore}</span>
+            </div>
+            <input
+              value={moodNote}
+              onChange={(e) => setMoodNote(e.target.value)}
+              placeholder={t("journal.moodNotePlaceholder")}
+              className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
+            />
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={moodSaving}
+                className="rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
+              >
+                {t("journal.saveMood")}
+              </button>
+              {moodSavedAt && (
+                <span className="text-xs text-slate-400">{t("journal.savedAt", { time: moodSavedAt })}</span>
+              )}
+            </div>
+          </form>
+
+          {moodHistory.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+              {moodHistory.slice(0, 12).map((entry) => (
+                <span
+                  key={entry.id}
+                  title={new Date(entry.createdAt).toLocaleString()}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-sand-50 text-base"
+                >
+                  {MOOD_EMOJI[entry.score - 1]}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
           <div className="flex items-center gap-2.5">
@@ -104,6 +249,24 @@ export default function JournalPage() {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <ListChecks className="h-[18px] w-[18px]" />
+            </span>
+            <h2 className="font-bold text-slate-800">{t("journal.habitsToday")}</h2>
+          </div>
+          <div className="mt-4">
+            <CategorizedActivityPicker
+              activities={activities}
+              todaysLogs={todaysLogs}
+              togglingId={togglingId}
+              onToggle={toggleActivity}
+              onLogByName={logActivityByName}
+            />
+          </div>
         </section>
       </main>
     </>
