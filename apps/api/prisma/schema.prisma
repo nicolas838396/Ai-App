@@ -94,6 +94,13 @@ model ChatConversation {
   createdAt DateTime      @default(now())
   messages  ChatMessage[]
 
+  // Rolling memory: a compact summary of messages older than the active
+  // context window, plus how many (oldest-first) messages it already
+  // covers. Lets the AI companion recall relevant history from a long
+  // conversation without resending the entire transcript on every turn.
+  summary                String?
+  summarizedMessageCount Int      @default(0)
+
   @@map("chat_conversations")
 }
 

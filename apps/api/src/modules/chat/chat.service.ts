@@ -2,8 +2,18 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaService } from "../../prisma/prisma.service";
-import type { ChatMessage, User } from "@prisma/client";
+import type { ChatConversation, ChatMessage, User } from "@prisma/client";
 import type { SendMessageDto } from "./dto/send-message.dto";
+
+// How many of the most recent messages are always sent to the model
+// verbatim. Anything older is folded into a running summary instead, so a
+// long-running conversation doesn't keep growing the per-message cost (or
+// eventually exceed the context window) while still letting the AI recall
+// what mattered earlier on.
+const RECENT_MESSAGE_WINDOW = 20;
+// Only re-summarize once this many messages have fallen out of the active
+// window, so summarization runs roughly every 10 turns instead of every one.
+const SUMMARY_BATCH_SIZE = 10;
 
 const SYSTEM_PROMPT = `Du bist ein einfühlsamer, unterstützender Begleiter in einer Mental-Health-App.
 Du hörst zu, stellst reflektierende Fragen und hilfst beim Einordnen von Gefühlen und Gewohnheiten.
@@ -44,9 +54,16 @@ function buildCycleContextNote(user: User): string | null {
   return `Zusatzinfo (freiwillig angegeben, nur als sanfter Hintergrund, keine Tatsache): Die Nutzerin verfolgt ihren Menstruationszyklus und befindet sich rechnerisch aktuell etwa in der Phase "${phase}" (Tag ${cycleDay} von ${length}). Erwähne das nicht ungefragt und unterstelle keine Ursache für ihre Stimmung – nutze es höchstens im Hinterkopf, falls sie selbst körperliche oder emotionale Beschwerden schildert, die dazu passen könnten.`;
 }
 
-function buildSystemPrompt(user: User): string {
+function buildSystemPrompt(user: User, memorySummary: string | null): string {
+  const parts = [SYSTEM_PROMPT];
+  if (memorySummary) {
+    parts.push(
+      `Zusammenfassung früherer Gespräche mit diesem Nutzer (älterer Kontext, nicht mehr im aktiven Nachrichtenfenster, aber weiterhin relevant): ${memorySummary}`,
+    );
+  }
   const cycleNote = buildCycleContextNote(user);
-  return cycleNote ? `${SYSTEM_PROMPT}\n\n${cycleNote}` : SYSTEM_PROMPT;
+  if (cycleNote) parts.push(cycleNote);
+  return parts.join("\n\n");
 }
 
 function parseImageDataUrl(dataUrl: string): { mediaType: "image/jpeg" | "image/png" | "image/webp"; base64: string } {
@@ -90,6 +107,56 @@ export class ChatService {
       apiKey: this.configService.get<string>("ANTHROPIC_API_KEY"),
     });
     this.model = this.configService.get<string>("ANTHROPIC_MODEL") ?? "claude-sonnet-5";
+  }
+
+  // Keeps only the most recent RECENT_MESSAGE_WINDOW messages in the raw
+  // context sent to the model; anything older is condensed into (and kept
+  // up to date in) a running summary on the conversation.
+  private async getMemory(
+    conversation: ChatConversation,
+    history: ChatMessage[],
+  ): Promise<{ summary: string | null; activeMessages: ChatMessage[] }> {
+    const idealCutoff = Math.max(0, history.length - RECENT_MESSAGE_WINDOW);
+    let summary = conversation.summary;
+    let summarizedCount = conversation.summarizedMessageCount;
+
+    if (idealCutoff - summarizedCount >= SUMMARY_BATCH_SIZE) {
+      const toFold = history.slice(summarizedCount, idealCutoff);
+      summary = await this.foldIntoSummary(summary, toFold);
+      summarizedCount = idealCutoff;
+      await this.prisma.chatConversation.update({
+        where: { id: conversation.id },
+        data: { summary, summarizedMessageCount: summarizedCount },
+      });
+    }
+
+    return { summary, activeMessages: history.slice(summarizedCount) };
+  }
+
+  private async foldIntoSummary(previousSummary: string | null, messages: ChatMessage[]): Promise<string> {
+    const transcript = messages
+      .map((m) => `${m.role === "user" ? "Nutzer" : "Mira"}: ${m.content || "[Bild ohne Text]"}`)
+      .join("\n");
+
+    const prompt = `Bisherige Zusammenfassung eines Gesprächs zwischen einem Nutzer und seinem KI-Begleiter in einer Mental-Health-App:
+${previousSummary ?? "(noch keine)"}
+
+Neuer Gesprächsausschnitt, der jetzt aus dem aktiven Kontextfenster fällt:
+${transcript}
+
+Aktualisiere die Zusammenfassung kompakt (max. ca. 300 Wörter). Behalte nur, was für eine einfühlsame Begleitung wirklich relevant bleibt: wiederkehrende Sorgen oder Themen, wichtige Lebensereignisse, Ziele, Fortschritte, getroffene Vereinbarungen. Lass Smalltalk und Nebensächliches weg. Schreibe sachlich in der dritten Person über den Nutzer, ohne direkte Anrede.`;
+
+    const response = await this.anthropic.messages.create({
+      model: this.model,
+      max_tokens: 500,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    return response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === "text")
+      .map((block) => block.text)
+      .join("\n")
+      .trim();
   }
 
   async sendMessage(userId: string, dto: SendMessageDto) {
@@ -137,12 +204,13 @@ export class ChatService {
     });
 
     const history = [...conversation.messages, userMessage];
+    const { summary, activeMessages } = await this.getMemory(conversation, history);
 
     const response = await this.anthropic.messages.create({
       model: this.model,
       max_tokens: 1024,
-      system: buildSystemPrompt(user),
-      messages: history.map((m) => ({
+      system: buildSystemPrompt(user, summary),
+      messages: activeMessages.map((m) => ({
         role: m.role === "assistant" ? "assistant" : "user",
         content: buildContentBlocks(m),
       })),
