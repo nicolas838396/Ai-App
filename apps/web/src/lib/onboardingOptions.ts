@@ -37,22 +37,17 @@ export const USAGE_FREQUENCY_OPTIONS = [
   { value: "bei_bedarf", label: "Bei Bedarf" },
 ];
 
-export const PRONOUN_OPTIONS = [
-  { value: "sie_ihr", label: "sie/ihr" },
-  { value: "er_ihm", label: "er/ihm" },
-  { value: "divers", label: "divers/they" },
-  { value: "keine_angabe", label: "Keine Angabe" },
-];
-
 export interface UserProfile {
   id: string;
   email: string;
   firstName: string | null;
   birthDate: string | null;
-  pronoun: string | null;
   goals: string[];
   concerns: string[];
   stressAreas: string[];
   usageFrequency: string | null;
+  cycleTrackingEnabled: boolean;
+  lastPeriodStartDate: string | null;
+  cycleLengthDays: number | null;
   onboardingCompletedAt: string | null;
 }

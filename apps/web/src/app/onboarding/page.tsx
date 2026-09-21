@@ -10,7 +10,6 @@ import {
   CONCERN_OPTIONS,
   STRESS_AREA_OPTIONS,
   USAGE_FREQUENCY_OPTIONS,
-  PRONOUN_OPTIONS,
   type UserProfile,
 } from "@/lib/onboardingOptions";
 
@@ -58,11 +57,13 @@ export default function OnboardingPage() {
 
   const [firstName, setFirstName] = useState("");
   const [birthDate, setBirthDate] = useState("");
-  const [pronoun, setPronoun] = useState("keine_angabe");
   const [goals, setGoals] = useState<string[]>([]);
   const [concerns, setConcerns] = useState<string[]>([]);
   const [stressAreas, setStressAreas] = useState<string[]>([]);
   const [usageFrequency, setUsageFrequency] = useState("");
+  const [cycleTrackingEnabled, setCycleTrackingEnabled] = useState<boolean | null>(null);
+  const [lastPeriodStartDate, setLastPeriodStartDate] = useState("");
+  const [cycleLengthDays, setCycleLengthDays] = useState("28");
   const [consent, setConsent] = useState(false);
 
   useEffect(() => {
@@ -71,11 +72,13 @@ export default function OnboardingPage() {
       .then((profile) => {
         if (profile.firstName) setFirstName(profile.firstName);
         if (profile.birthDate) setBirthDate(profile.birthDate.slice(0, 10));
-        if (profile.pronoun) setPronoun(profile.pronoun);
         if (profile.goals?.length) setGoals(profile.goals);
         if (profile.concerns?.length) setConcerns(profile.concerns);
         if (profile.stressAreas?.length) setStressAreas(profile.stressAreas);
         if (profile.usageFrequency) setUsageFrequency(profile.usageFrequency);
+        if (profile.onboardingCompletedAt) setCycleTrackingEnabled(profile.cycleTrackingEnabled);
+        if (profile.lastPeriodStartDate) setLastPeriodStartDate(profile.lastPeriodStartDate.slice(0, 10));
+        if (profile.cycleLengthDays) setCycleLengthDays(String(profile.cycleLengthDays));
       })
       .catch(() => {})
       .finally(() => setLoadingProfile(false));
@@ -83,7 +86,10 @@ export default function OnboardingPage() {
 
   const step1Valid = firstName.trim().length > 0 && birthDate.length > 0;
   const step2Valid = goals.length > 0;
-  const step3Valid = concerns.length > 0 && usageFrequency.length > 0 && consent;
+  const cycleValid =
+    cycleTrackingEnabled === false || (cycleTrackingEnabled === true && lastPeriodStartDate.length > 0 && cycleLengthDays.length > 0);
+  const step3Valid =
+    concerns.length > 0 && usageFrequency.length > 0 && cycleTrackingEnabled !== null && cycleValid && consent;
 
   function goNext() {
     setError(null);
@@ -106,7 +112,9 @@ export default function OnboardingPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!step3Valid) {
-      setError("Bitte wähle mindestens eine Angabe zu deinen Beschwerden, deine Nutzungshäufigkeit und bestätige die Einwilligung.");
+      setError(
+        "Bitte wähle mindestens eine Angabe zu deinen Beschwerden, deine Nutzungshäufigkeit, beantworte die Zyklus-Frage (auch mit „Nein“ möglich) und bestätige die Einwilligung.",
+      );
       return;
     }
     setSubmitting(true);
@@ -117,11 +125,14 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           firstName: firstName.trim(),
           birthDate,
-          pronoun,
           goals,
           concerns,
           stressAreas,
           usageFrequency,
+          cycleTrackingEnabled: cycleTrackingEnabled === true,
+          ...(cycleTrackingEnabled
+            ? { lastPeriodStartDate, cycleLengthDays: Number(cycleLengthDays) }
+            : {}),
           healthDataConsent: consent,
         }),
       });
@@ -180,18 +191,6 @@ export default function OnboardingPage() {
                   onChange={(e) => setBirthDate(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
                 />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Wie dürfen wir dich ansprechen? <span className="font-normal text-slate-400">(optional)</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {PRONOUN_OPTIONS.map((option) => (
-                    <Chip key={option.value} active={pronoun === option.value} onClick={() => setPronoun(option.value)}>
-                      {option.label}
-                    </Chip>
-                  ))}
-                </div>
               </div>
             </div>
           )}
@@ -261,6 +260,55 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Hast du einen Menstruationszyklus, den Mira berücksichtigen soll?{" "}
+                  <span className="font-normal text-slate-400">(optional)</span>
+                </label>
+                <p className="mb-2 text-xs text-slate-400">
+                  Manche Beschwerden hängen mit dem Zyklus zusammen – wenn du magst, behält Mira das
+                  im Hinterkopf, ohne es dir vorzuschreiben.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Chip active={cycleTrackingEnabled === true} onClick={() => setCycleTrackingEnabled(true)}>
+                    Ja
+                  </Chip>
+                  <Chip active={cycleTrackingEnabled === false} onClick={() => setCycleTrackingEnabled(false)}>
+                    Nein
+                  </Chip>
+                </div>
+
+                {cycleTrackingEnabled === true && (
+                  <div className="mt-3 flex flex-col gap-3 rounded-xl bg-sand-50 p-3.5">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-600">
+                        Erster Tag deiner letzten Periode
+                      </label>
+                      <input
+                        type="date"
+                        value={lastPeriodStartDate}
+                        max={new Date().toISOString().slice(0, 10)}
+                        onChange={(e) => setLastPeriodStartDate(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-600">
+                        Durchschnittliche Zykluslänge (Tage)
+                      </label>
+                      <input
+                        type="number"
+                        min={15}
+                        max={45}
+                        value={cycleLengthDays}
+                        onChange={(e) => setCycleLengthDays(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <label className="flex items-start gap-2.5 rounded-xl bg-sand-50 p-3.5 text-xs leading-relaxed text-slate-600">
                 <input
                   type="checkbox"
@@ -268,9 +316,10 @@ export default function OnboardingPage() {
                   onChange={(e) => setConsent(e.target.checked)}
                   className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-brand-500"
                 />
-                Ich bin damit einverstanden, dass meine Angaben zu Beschwerden und Zielen – als
-                gesundheitsbezogene Daten – verarbeitet werden, um Mira für mich persönlicher zu
-                machen. Ich kann diese Einwilligung jederzeit widerrufen.
+                Ich bin damit einverstanden, dass meine Angaben zu Beschwerden, Zielen und –
+                falls angegeben – meinem Zyklus als gesundheitsbezogene Daten verarbeitet werden,
+                um Mira für mich persönlicher zu machen. Ich kann diese Einwilligung jederzeit
+                widerrufen.
               </label>
             </div>
           )}

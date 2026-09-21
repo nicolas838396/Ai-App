@@ -6,9 +6,13 @@ import {
   IsBoolean,
   IsDateString,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
+  ValidateIf,
 } from "class-validator";
 
 export const GOAL_OPTIONS = [
@@ -44,8 +48,6 @@ export const STRESS_AREA_OPTIONS = [
 
 export const USAGE_FREQUENCY_OPTIONS = ["taeglich", "mehrmals_woechentlich", "bei_bedarf"] as const;
 
-export const PRONOUN_OPTIONS = ["sie_ihr", "er_ihm", "divers", "keine_angabe"] as const;
-
 export class CompleteOnboardingDto {
   @IsString()
   @MaxLength(60)
@@ -53,10 +55,6 @@ export class CompleteOnboardingDto {
 
   @IsDateString()
   birthDate!: string;
-
-  @IsOptional()
-  @IsIn(PRONOUN_OPTIONS)
-  pronoun?: string;
 
   @IsArray()
   @ArrayMinSize(1)
@@ -78,6 +76,19 @@ export class CompleteOnboardingDto {
 
   @IsIn(USAGE_FREQUENCY_OPTIONS)
   usageFrequency!: string;
+
+  @IsBoolean()
+  cycleTrackingEnabled!: boolean;
+
+  @ValidateIf((dto: CompleteOnboardingDto) => dto.cycleTrackingEnabled)
+  @IsDateString()
+  lastPeriodStartDate?: string;
+
+  @ValidateIf((dto: CompleteOnboardingDto) => dto.cycleTrackingEnabled)
+  @IsInt()
+  @Min(15)
+  @Max(45)
+  cycleLengthDays?: number;
 
   @IsBoolean()
   @Equals(true, { message: "Zustimmung zur Verarbeitung gesundheitsbezogener Daten ist erforderlich" })

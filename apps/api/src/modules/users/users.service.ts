@@ -27,17 +27,27 @@ export class UsersService {
       throw new BadRequestException("Ungültiges Geburtsdatum");
     }
 
+    let lastPeriodStartDate: Date | null = null;
+    if (dto.cycleTrackingEnabled) {
+      lastPeriodStartDate = new Date(dto.lastPeriodStartDate!);
+      if (Number.isNaN(lastPeriodStartDate.getTime()) || lastPeriodStartDate > new Date()) {
+        throw new BadRequestException("Ungültiges Datum der letzten Periode");
+      }
+    }
+
     const now = new Date();
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         firstName: dto.firstName,
         birthDate,
-        pronoun: dto.pronoun,
         goals: dto.goals,
         concerns: dto.concerns,
         stressAreas: dto.stressAreas ?? [],
         usageFrequency: dto.usageFrequency,
+        cycleTrackingEnabled: dto.cycleTrackingEnabled,
+        lastPeriodStartDate,
+        cycleLengthDays: dto.cycleTrackingEnabled ? dto.cycleLengthDays : null,
         healthDataConsentAt: now,
         onboardingCompletedAt: now,
       },

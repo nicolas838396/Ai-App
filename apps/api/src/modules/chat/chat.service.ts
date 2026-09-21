@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaService } from "../../prisma/prisma.service";
+import type { User } from "@prisma/client";
 import type { SendMessageDto } from "./dto/send-message.dto";
 
 const SYSTEM_PROMPT = `Du bist ein einfühlsamer, unterstützender Begleiter in einer Mental-Health-App.
@@ -9,6 +10,41 @@ Du hörst zu, stellst reflektierende Fragen und hilfst beim Einordnen von Gefüh
 Du bist kein Therapeut und stellst keine Diagnosen. Bei Hinweisen auf akute Selbst- oder
 Fremdgefährdung verweist du ruhig und klar auf professionelle Hilfe bzw. den Notruf.
 Antworte warm, kurz und konkret auf Deutsch, sofern der Nutzer nicht in einer anderen Sprache schreibt.`;
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// A rough, non-diagnostic cycle-phase estimate from a self-reported last
+// period start date + average length. Framed as a soft hint, never as fact,
+// so the model doesn't attribute a mood to it uninvited.
+function buildCycleContextNote(user: User): string | null {
+  if (!user.cycleTrackingEnabled || !user.lastPeriodStartDate || !user.cycleLengthDays) {
+    return null;
+  }
+
+  const length = user.cycleLengthDays;
+  const daysSinceStart = Math.floor((Date.now() - user.lastPeriodStartDate.getTime()) / MS_PER_DAY);
+  if (daysSinceStart < 0) return null;
+
+  const cycleDay = (daysSinceStart % length) + 1;
+
+  let phase: string;
+  if (cycleDay <= 5) {
+    phase = "Menstruation";
+  } else if (cycleDay >= length - 4) {
+    phase = "prämenstruelle Phase (PMS-anfällig)";
+  } else if (Math.abs(cycleDay - Math.round(length / 2)) <= 1) {
+    phase = "Eisprung";
+  } else {
+    phase = "Zyklusmitte";
+  }
+
+  return `Zusatzinfo (freiwillig angegeben, nur als sanfter Hintergrund, keine Tatsache): Die Nutzerin verfolgt ihren Menstruationszyklus und befindet sich rechnerisch aktuell etwa in der Phase "${phase}" (Tag ${cycleDay} von ${length}). Erwähne das nicht ungefragt und unterstelle keine Ursache für ihre Stimmung – nutze es höchstens im Hinterkopf, falls sie selbst körperliche oder emotionale Beschwerden schildert, die dazu passen könnten.`;
+}
+
+function buildSystemPrompt(user: User): string {
+  const cycleNote = buildCycleContextNote(user);
+  return cycleNote ? `${SYSTEM_PROMPT}\n\n${cycleNote}` : SYSTEM_PROMPT;
+}
 
 @Injectable()
 export class ChatService {
@@ -26,6 +62,8 @@ export class ChatService {
   }
 
   async sendMessage(userId: string, dto: SendMessageDto) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
     const conversation = dto.conversationId
       ? await this.prisma.chatConversation.findFirstOrThrow({
           where: { id: dto.conversationId, userId },
@@ -45,7 +83,7 @@ export class ChatService {
     const response = await this.anthropic.messages.create({
       model: this.model,
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(user),
       messages: history.map((m) => ({
         role: m.role === "assistant" ? "assistant" : "user",
         content: m.content,

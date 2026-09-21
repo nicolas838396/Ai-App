@@ -19,11 +19,13 @@ model User {
   // the AI companion have basic context about who they're talking to.
   firstName             String?
   birthDate             DateTime? @db.Date
-  pronoun               String?
   goals                 String[] @default([])
   concerns              String[] @default([])
   stressAreas           String[] @default([])
   usageFrequency        String?
+  cycleTrackingEnabled  Boolean   @default(false)
+  lastPeriodStartDate   DateTime? @db.Date
+  cycleLengthDays       Int?
   healthDataConsentAt   DateTime?
   onboardingCompletedAt DateTime?
 
