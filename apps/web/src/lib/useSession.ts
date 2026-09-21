@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 import { apiFetch } from "./apiClient";
+import { isOnboardingCachedComplete, markOnboardingComplete } from "./onboardingCache";
 
 interface UseSessionOptions {
   requireAuth?: boolean;
@@ -56,7 +57,12 @@ export function useSession(options: UseSessionOptions = {}) {
         return;
       }
 
-      if (newSession && options.requireAuth && !options.skipOnboardingCheck) {
+      if (
+        newSession &&
+        options.requireAuth &&
+        !options.skipOnboardingCheck &&
+        !isOnboardingCachedComplete(newSession.user.id)
+      ) {
         try {
           const profile = await fetchProfileWithRetries(() => {
             if (!cancelled) setSlow(true);
@@ -67,6 +73,7 @@ export function useSession(options: UseSessionOptions = {}) {
             router.replace("/onboarding");
             return;
           }
+          markOnboardingComplete(newSession.user.id);
         } catch {
           // If the check still fails after retries (e.g. a genuine outage),
           // don't trap the user — let them through rather than looping

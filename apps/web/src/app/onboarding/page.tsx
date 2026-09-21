@@ -14,6 +14,7 @@ import {
   type UserProfile,
 } from "@/lib/onboardingOptions";
 import { looksLikeMaleFirstName } from "@/lib/germanMaleFirstNames";
+import { markOnboardingComplete } from "@/lib/onboardingCache";
 
 const TOTAL_STEPS = 2;
 
@@ -141,6 +142,7 @@ export default function OnboardingPage() {
           healthDataConsent: consent,
         }),
       });
+      if (session) markOnboardingComplete(session.user.id);
       router.push("/dashboard");
     } catch {
       setError("Deine Angaben konnten nicht gespeichert werden. Bitte versuch es erneut.");
