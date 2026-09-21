@@ -15,6 +15,18 @@ model User {
   email     String   @unique
   createdAt DateTime @default(now())
 
+  // Onboarding profile — collected once after registration so the app and
+  // the AI companion have basic context about who they're talking to.
+  firstName             String?
+  birthDate             DateTime? @db.Date
+  pronoun               String?
+  goals                 String[] @default([])
+  concerns              String[] @default([])
+  stressAreas           String[] @default([])
+  usageFrequency        String?
+  healthDataConsentAt   DateTime?
+  onboardingCompletedAt DateTime?
+
   moodEntries    MoodEntry[]
   journalEntries JournalEntry[]
   activityLogs   ActivityLog[]

@@ -1,0 +1,317 @@
+"use client";
+
+import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
+import { useSession } from "@/lib/useSession";
+import { apiFetch } from "@/lib/apiClient";
+import {
+  GOAL_OPTIONS,
+  CONCERN_OPTIONS,
+  STRESS_AREA_OPTIONS,
+  USAGE_FREQUENCY_OPTIONS,
+  PRONOUN_OPTIONS,
+  type UserProfile,
+} from "@/lib/onboardingOptions";
+
+const TOTAL_STEPS = 3;
+
+function toggleValue(list: string[], value: string): string[] {
+  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+        active
+          ? "border-brand-400 bg-brand-500 text-white shadow-soft"
+          : "border-slate-200 text-slate-600 hover:border-brand-200"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const { session, loading: sessionLoading } = useSession({
+    requireAuth: true,
+    skipOnboardingCheck: true,
+  });
+
+  const [step, setStep] = useState(1);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [pronoun, setPronoun] = useState("keine_angabe");
+  const [goals, setGoals] = useState<string[]>([]);
+  const [concerns, setConcerns] = useState<string[]>([]);
+  const [stressAreas, setStressAreas] = useState<string[]>([]);
+  const [usageFrequency, setUsageFrequency] = useState("");
+  const [consent, setConsent] = useState(false);
+
+  useEffect(() => {
+    if (!session) return;
+    apiFetch<UserProfile>("/users/me")
+      .then((profile) => {
+        if (profile.firstName) setFirstName(profile.firstName);
+        if (profile.birthDate) setBirthDate(profile.birthDate.slice(0, 10));
+        if (profile.pronoun) setPronoun(profile.pronoun);
+        if (profile.goals?.length) setGoals(profile.goals);
+        if (profile.concerns?.length) setConcerns(profile.concerns);
+        if (profile.stressAreas?.length) setStressAreas(profile.stressAreas);
+        if (profile.usageFrequency) setUsageFrequency(profile.usageFrequency);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingProfile(false));
+  }, [session]);
+
+  const step1Valid = firstName.trim().length > 0 && birthDate.length > 0;
+  const step2Valid = goals.length > 0;
+  const step3Valid = concerns.length > 0 && usageFrequency.length > 0 && consent;
+
+  function goNext() {
+    setError(null);
+    if (step === 1 && !step1Valid) {
+      setError("Bitte gib deinen Vornamen und dein Geburtsdatum an.");
+      return;
+    }
+    if (step === 2 && !step2Valid) {
+      setError("Bitte wähle mindestens ein Ziel aus.");
+      return;
+    }
+    setStep((s) => Math.min(TOTAL_STEPS, s + 1));
+  }
+
+  function goBack() {
+    setError(null);
+    setStep((s) => Math.max(1, s - 1));
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!step3Valid) {
+      setError("Bitte wähle mindestens eine Angabe zu deinen Beschwerden, deine Nutzungshäufigkeit und bestätige die Einwilligung.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch("/users/me/onboarding", {
+        method: "PATCH",
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          birthDate,
+          pronoun,
+          goals,
+          concerns,
+          stressAreas,
+          usageFrequency,
+          healthDataConsent: consent,
+        }),
+      });
+      router.push("/dashboard");
+    } catch {
+      setError("Deine Angaben konnten nicht gespeichert werden. Bitte versuch es erneut.");
+      setSubmitting(false);
+    }
+  }
+
+  if (sessionLoading || !session || loadingProfile) return null;
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-hero-gradient px-6 py-10">
+      <div className="w-full max-w-lg rounded-3xl bg-white/90 p-8 shadow-soft ring-1 ring-black/5 backdrop-blur-sm">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <h1 className="text-2xl">Schön, dass du da bist</h1>
+          <p className="text-sm text-slate-500">
+            Ein paar kurze Fragen, damit Mira dich besser begleiten kann.
+          </p>
+        </div>
+
+        <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-sand-100">
+          <div
+            className="h-full rounded-full bg-brand-500 transition-all"
+            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+          />
+        </div>
+        <p className="mt-2 text-center text-xs font-medium text-slate-400">
+          Schritt {step} von {TOTAL_STEPS}
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
+          {step === 1 && (
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Wie heißt du?</label>
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Vorname"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Wann bist du geboren?
+                </label>
+                <input
+                  type="date"
+                  value={birthDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Wie dürfen wir dich ansprechen? <span className="font-normal text-slate-400">(optional)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PRONOUN_OPTIONS.map((option) => (
+                    <Chip key={option.value} active={pronoun === option.value} onClick={() => setPronoun(option.value)}>
+                      {option.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                Was möchtest du mit Mira erreichen? <span className="font-normal text-slate-400">(Mehrfachauswahl)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {GOAL_OPTIONS.map((option) => (
+                  <Chip key={option.value} active={goals.includes(option.value)} onClick={() => setGoals(toggleValue(goals, option.value))}>
+                    {option.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="flex flex-col gap-5">
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Beschäftigt dich aktuell etwas davon? <span className="font-normal text-slate-400">(Mehrfachauswahl)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CONCERN_OPTIONS.map((option) => (
+                    <Chip
+                      key={option.value}
+                      active={concerns.includes(option.value)}
+                      onClick={() => setConcerns(toggleValue(concerns, option.value))}
+                    >
+                      {option.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Wo entsteht gerade am meisten Belastung?{" "}
+                  <span className="font-normal text-slate-400">(optional, Mehrfachauswahl)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {STRESS_AREA_OPTIONS.map((option) => (
+                    <Chip
+                      key={option.value}
+                      active={stressAreas.includes(option.value)}
+                      onClick={() => setStressAreas(toggleValue(stressAreas, option.value))}
+                    >
+                      {option.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Wie oft möchtest du Mira nutzen?
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {USAGE_FREQUENCY_OPTIONS.map((option) => (
+                    <Chip key={option.value} active={usageFrequency === option.value} onClick={() => setUsageFrequency(option.value)}>
+                      {option.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2.5 rounded-xl bg-sand-50 p-3.5 text-xs leading-relaxed text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-brand-500"
+                />
+                Ich bin damit einverstanden, dass meine Angaben zu Beschwerden und Zielen – als
+                gesundheitsbezogene Daten – verarbeitet werden, um Mira für mich persönlicher zu
+                machen. Ich kann diese Einwilligung jederzeit widerrufen.
+              </label>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <div className="flex items-center justify-between gap-3">
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={goBack}
+                className="flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Zurück
+              </button>
+            ) : (
+              <span />
+            )}
+
+            {step < TOTAL_STEPS ? (
+              <button
+                type="button"
+                onClick={goNext}
+                className="flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600"
+              >
+                Weiter
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
+              >
+                {submitting ? "…" : "Fertig"}
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </main>
+  );
+}
