@@ -50,8 +50,9 @@ export const translations = {
     "login.toggleToLogin": "Schon ein Konto? Anmelden",
     "login.backToHome": "← Zurück zur Startseite",
     "login.missingNameOrBirth": "Bitte gib deinen Vornamen und dein Geburtsdatum an.",
-    "login.confirmEmailSent":
-      "Wir haben dir eine Bestätigungs-E-Mail geschickt. Bitte bestätige sie, dann kannst du dich hier anmelden.",
+    "login.confirmEmailTitle": "Bestätigungsmail unterwegs",
+    "login.confirmEmailBody": "Wir haben eine Bestätigungsmail an {email} geschickt. Wir warten hier, bis du auf den Link darin geklickt hast.",
+    "login.confirmEmailBackToLogin": "Ich habe bestätigt – Anmelden",
 
     "dashboard.greeting": "Schön, dich zu sehen 👋",
     "dashboard.subtitle": "Was möchtest du heute machen?",
@@ -310,7 +311,9 @@ export const translations = {
     "login.toggleToLogin": "Already have an account? Log in",
     "login.backToHome": "← Back to home",
     "login.missingNameOrBirth": "Please enter your first name and date of birth.",
-    "login.confirmEmailSent": "We've sent you a confirmation email. Please confirm it, then log in here.",
+    "login.confirmEmailTitle": "Confirmation email on its way",
+    "login.confirmEmailBody": "We've sent a confirmation email to {email}. We'll wait here until you've clicked the link in it.",
+    "login.confirmEmailBackToLogin": "I've confirmed – Log in",
 
     "dashboard.greeting": "Good to see you 👋",
     "dashboard.subtitle": "What would you like to do today?",

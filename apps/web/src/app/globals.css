@@ -73,3 +73,31 @@ textarea {
 .shape-cycle-icon {
   animation: shape-cycle 3s ease-in-out infinite;
 }
+
+@keyframes pigeon-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(-1.5deg);
+  }
+}
+
+.pigeon-bob {
+  animation: pigeon-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes pigeon-wing-flap {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-22deg);
+  }
+}
+
+.pigeon-wing {
+  animation: pigeon-wing-flap 0.7s ease-in-out infinite;
+}

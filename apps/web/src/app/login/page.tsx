@@ -9,25 +9,24 @@ import { translateAuthError } from "@/lib/authErrors";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useColorTheme } from "@/lib/ColorThemeContext";
 import { ColorThemePicker } from "@/components/ColorThemePicker";
+import { PigeonIllustration } from "@/components/PigeonIllustration";
 
 export default function LoginPage() {
   const router = useRouter();
   const { t, language } = useLanguage();
   const { colorTheme, setColorTheme } = useColorTheme();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "confirmEmail">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (loading) return;
     setError(null);
-    setInfo(null);
 
     if (mode === "login") {
       setLoading(true);
@@ -61,8 +60,28 @@ export default function LoginPage() {
       router.push("/dashboard");
       return;
     }
-    setInfo(t("login.confirmEmailSent"));
-    setMode("login");
+    setMode("confirmEmail");
+  }
+
+  if (mode === "confirmEmail") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-hero-gradient px-6">
+        <div className="w-full max-w-sm rounded-3xl bg-white/90 p-8 text-center shadow-soft ring-1 ring-black/5 backdrop-blur-sm">
+          <PigeonIllustration className="mx-auto w-48" />
+          <h1 className="mt-2 text-xl">{t("login.confirmEmailTitle")}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">
+            {t("login.confirmEmailBody", { email })}
+          </p>
+          <button
+            type="button"
+            onClick={() => setMode("login")}
+            className="mt-6 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600"
+          >
+            {t("login.confirmEmailBackToLogin")}
+          </button>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -141,7 +160,6 @@ export default function LoginPage() {
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {info && <p className="text-sm text-brand-700">{info}</p>}
           <button
             type="submit"
             disabled={loading}
@@ -156,7 +174,6 @@ export default function LoginPage() {
           onClick={() => {
             setMode(mode === "login" ? "register" : "login");
             setError(null);
-            setInfo(null);
           }}
           className="mt-4 w-full text-center text-sm font-semibold text-brand-700 hover:text-brand-800"
         >
