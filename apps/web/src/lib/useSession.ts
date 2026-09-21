@@ -45,11 +45,13 @@ function computeInitialState(options: UseSessionOptions): { session: Session | n
   if (typeof window === "undefined") return { session: null, loading: true };
   const stored = readStoredSessionSync();
   if (!options.requireAuth) return { session: stored, loading: false };
-  if (!stored) return { session: null, loading: true };
-  if (!options.skipOnboardingCheck && !isOnboardingCachedComplete(stored.user.id)) {
-    return { session: stored, loading: true };
-  }
-  return { session: stored, loading: false };
+  // Whether onboarding is complete is confirmed separately, in the background,
+  // and must never block the page from rendering — the check hits our own
+  // backend, which can take tens of seconds to wake up from a cold start on
+  // Render's free tier. A cached, unexpired session is reason enough to show
+  // the page immediately; onboarding.completedAt is only used afterwards to
+  // decide whether to redirect away from it.
+  return { session: stored, loading: !stored };
 }
 
 // Render's free tier spins the API down after inactivity; the first request
@@ -89,6 +91,13 @@ export function useSession(options: UseSessionOptions = {}) {
         return;
       }
 
+      // Once we know whether there's a session, stop blocking the page —
+      // the onboarding-completeness check below runs against our own
+      // backend (slow on a cold Render start) and must never hold up
+      // rendering. It only redirects away afterwards if it turns out
+      // onboarding genuinely isn't done.
+      setLoading(false);
+
       if (
         newSession &&
         options.requireAuth &&
@@ -99,7 +108,6 @@ export function useSession(options: UseSessionOptions = {}) {
           const profile = await fetchProfileWithRetries();
           if (cancelled) return;
           if (!profile.onboardingCompletedAt) {
-            setLoading(false);
             router.replace("/onboarding");
             return;
           }
@@ -110,8 +118,6 @@ export function useSession(options: UseSessionOptions = {}) {
           // forever on a backend that may be down.
         }
       }
-
-      if (!cancelled) setLoading(false);
     }
 
     supabase.auth.getSession().then(({ data }) => {
