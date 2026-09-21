@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useColorTheme } from "@/lib/ColorThemeContext";
 import { ColorThemePicker } from "@/components/ColorThemePicker";
 import { PigeonIllustration } from "@/components/PigeonIllustration";
+import { GoogleIcon, AppleIcon } from "@/components/icons/OAuthIcons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +23,22 @@ export default function LoginPage() {
   const [birthDate, setBirthDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "apple" | null>(null);
+
+  async function handleOAuthSignIn(provider: "google" | "apple") {
+    setError(null);
+    setOauthLoading(provider);
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (oauthError) {
+      setError(translateAuthError(oauthError.message, language));
+      setOauthLoading(null);
+    }
+    // On success the browser navigates away to the provider's consent
+    // screen, so there's nothing further to do here.
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -101,7 +118,34 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+        <div className="mt-6 flex flex-col gap-2.5">
+          <button
+            type="button"
+            onClick={() => handleOAuthSignIn("google")}
+            disabled={oauthLoading !== null}
+            className="flex items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700 shadow-soft transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            <GoogleIcon className="h-4 w-4" />
+            {oauthLoading === "google" ? "…" : t("login.continueWithGoogle")}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOAuthSignIn("apple")}
+            disabled={oauthLoading !== null}
+            className="flex items-center justify-center gap-2.5 rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-800 disabled:opacity-50"
+          >
+            <AppleIcon className="h-4 w-4" />
+            {oauthLoading === "apple" ? "…" : t("login.continueWithApple")}
+          </button>
+        </div>
+
+        <div className="my-5 flex items-center gap-3 text-xs font-semibold text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          {t("login.orDivider")}
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {mode === "register" && (
             <>
               <div className="relative">

@@ -53,6 +53,9 @@ export const translations = {
     "login.confirmEmailTitle": "Bestätigungsmail unterwegs",
     "login.confirmEmailBody": "Wir haben eine Bestätigungsmail an {email} geschickt. Wir warten hier, bis du auf den Link darin geklickt hast.",
     "login.confirmEmailBackToLogin": "Ich habe bestätigt – Anmelden",
+    "login.continueWithGoogle": "Mit Google anmelden",
+    "login.continueWithApple": "Mit Apple anmelden",
+    "login.orDivider": "oder",
 
     "dashboard.greeting": "Schön, dich zu sehen 👋",
     "dashboard.subtitle": "Was möchtest du heute machen?",
@@ -314,6 +317,9 @@ export const translations = {
     "login.confirmEmailTitle": "Confirmation email on its way",
     "login.confirmEmailBody": "We've sent a confirmation email to {email}. We'll wait here until you've clicked the link in it.",
     "login.confirmEmailBackToLogin": "I've confirmed – Log in",
+    "login.continueWithGoogle": "Continue with Google",
+    "login.continueWithApple": "Continue with Apple",
+    "login.orDivider": "or",
 
     "dashboard.greeting": "Good to see you 👋",
     "dashboard.subtitle": "What would you like to do today?",
