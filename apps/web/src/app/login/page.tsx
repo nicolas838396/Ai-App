@@ -3,14 +3,17 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Mail, Lock } from "lucide-react";
+import { Sparkles, Mail, Lock, User, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { translateAuthError } from "@/lib/authErrors";
 
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,25 +21,35 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (loading) return;
-    setLoading(true);
     setError(null);
     setInfo(null);
 
     if (mode === "login") {
+      setLoading(true);
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
       if (signInError) {
-        setError(signInError.message);
+        setError(translateAuthError(signInError.message));
         return;
       }
       router.push("/dashboard");
       return;
     }
 
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+    if (!firstName.trim() || !birthDate) {
+      setError("Bitte gib deinen Vornamen und dein Geburtsdatum an.");
+      return;
+    }
+
+    setLoading(true);
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { firstName: firstName.trim(), birthDate } },
+    });
     setLoading(false);
     if (signUpError) {
-      setError(signUpError.message);
+      setError(translateAuthError(signUpError.message));
       return;
     }
     if (data.session) {
@@ -61,6 +74,32 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+          {mode === "register" && (
+            <>
+              <div className="relative">
+                <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  required
+                  placeholder="Vorname"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm"
+                />
+              </div>
+              <div className="relative">
+                <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="date"
+                  required
+                  value={birthDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm"
+                />
+              </div>
+            </>
+          )}
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input

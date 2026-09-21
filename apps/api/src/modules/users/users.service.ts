@@ -11,12 +11,15 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async ensureUser(authUser: AuthenticatedUser) {
+    const birthDate = authUser.birthDate ? new Date(authUser.birthDate) : null;
     return this.prisma.user.upsert({
       where: { id: authUser.id },
       update: {},
       create: {
         id: authUser.id,
         email: authUser.email ?? `${authUser.id}@unknown.local`,
+        firstName: authUser.firstName ?? null,
+        birthDate: birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
       },
     });
   }

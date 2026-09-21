@@ -11,6 +11,9 @@ import type { Request } from "express";
 export interface AuthenticatedUser {
   id: string;
   email?: string;
+  /** From the signup form's options.data — only present for a brand-new user. */
+  firstName?: string;
+  birthDate?: string;
 }
 
 // Newer Supabase projects sign access tokens with an asymmetric key
@@ -46,9 +49,15 @@ export class SupabaseAuthGuard implements CanActivate {
 
     try {
       const { payload } = await jwtVerify(token, getJwks(supabaseUrl));
+      const metadata =
+        payload.user_metadata && typeof payload.user_metadata === "object"
+          ? (payload.user_metadata as Record<string, unknown>)
+          : {};
       const user: AuthenticatedUser = {
         id: String(payload.sub),
         email: typeof payload.email === "string" ? payload.email : undefined,
+        firstName: typeof metadata.firstName === "string" ? metadata.firstName : undefined,
+        birthDate: typeof metadata.birthDate === "string" ? metadata.birthDate : undefined,
       };
       (request as Request & { user: AuthenticatedUser }).user = user;
       return true;

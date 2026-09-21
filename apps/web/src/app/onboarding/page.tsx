@@ -15,7 +15,7 @@ import {
 } from "@/lib/onboardingOptions";
 import { looksLikeMaleFirstName } from "@/lib/germanMaleFirstNames";
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 function toggleValue(list: string[], value: string): string[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
@@ -87,14 +87,13 @@ export default function OnboardingPage() {
       .finally(() => setLoadingProfile(false));
   }, [session]);
 
-  const step1Valid = firstName.trim().length > 0 && birthDate.length > 0;
-  const step2Valid = goals.length > 0;
+  const step1Valid = goals.length > 0;
   const showCycleQuestion = !looksLikeMaleFirstName(firstName) || showCycleQuestionAnyway;
   const cycleValid =
     !showCycleQuestion ||
     cycleTrackingEnabled === false ||
     (cycleTrackingEnabled === true && lastPeriodStartDate.length > 0 && cycleLengthDays.length > 0);
-  const step3Valid =
+  const step2Valid =
     concerns.length > 0 &&
     usageFrequency.length > 0 &&
     (!showCycleQuestion || cycleTrackingEnabled !== null) &&
@@ -104,10 +103,6 @@ export default function OnboardingPage() {
   function goNext() {
     setError(null);
     if (step === 1 && !step1Valid) {
-      setError("Bitte gib deinen Vornamen und dein Geburtsdatum an.");
-      return;
-    }
-    if (step === 2 && !step2Valid) {
       setError("Bitte wähle mindestens ein Ziel aus.");
       return;
     }
@@ -121,7 +116,7 @@ export default function OnboardingPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!step3Valid) {
+    if (!step2Valid) {
       setError(
         "Bitte wähle mindestens eine Angabe zu deinen Beschwerden, deine Nutzungshäufigkeit, beantworte die Zyklus-Frage (auch mit „Nein“ möglich) und bestätige die Einwilligung.",
       );
@@ -180,32 +175,6 @@ export default function OnboardingPage() {
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
           {step === 1 && (
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Wie heißt du?</label>
-                <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Vorname"
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Wann bist du geboren?
-                </label>
-                <input
-                  type="date"
-                  value={birthDate}
-                  max={new Date().toISOString().slice(0, 10)}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">
                 Was möchtest du mit Mira erreichen? <span className="font-normal text-slate-400">(Mehrfachauswahl)</span>
@@ -220,7 +189,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <div className="flex flex-col gap-5">
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
