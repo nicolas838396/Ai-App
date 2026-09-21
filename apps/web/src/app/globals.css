@@ -17,6 +17,19 @@
   --brand-700: 30 101 81;
   --brand-800: 26 81 66;
   --brand-900: 22 66 55;
+
+  /* Default (classic) secondary scale — overwritten at runtime alongside
+     --brand-* by lib/colorThemes.ts. */
+  --calm-50: 244 242 253;
+  --calm-100: 232 227 250;
+  --calm-200: 211 201 245;
+  --calm-300: 182 165 236;
+  --calm-400: 154 128 224;
+  --calm-500: 130 100 209;
+  --calm-600: 108 76 184;
+  --calm-700: 88 61 150;
+  --calm-800: 73 51 120;
+  --calm-900: 61 44 98;
 }
 
 body {

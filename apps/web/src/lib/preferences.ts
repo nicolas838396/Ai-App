@@ -44,7 +44,7 @@ export function setLanguagePreference(lang: Language) {
   }
 }
 
-const VALID_THEME_IDS: ColorThemeId[] = ["green", "ocean", "sunset", "lavender"];
+const VALID_THEME_IDS: ColorThemeId[] = ["classic", "light", "dark", "muted"];
 
 export function getColorThemePreference(): ColorThemeId {
   try {

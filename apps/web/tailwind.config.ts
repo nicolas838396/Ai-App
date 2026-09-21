@@ -26,17 +26,19 @@ const config: Config = {
           800: "rgb(var(--brand-800) / <alpha-value>)",
           900: "rgb(var(--brand-900) / <alpha-value>)",
         },
+        // The secondary half of the coordinated color theme — see the
+        // comment on `brand` above, same mechanism.
         calm: {
-          50: "#f4f2fd",
-          100: "#e8e3fa",
-          200: "#d3c9f5",
-          300: "#b6a5ec",
-          400: "#9a80e0",
-          500: "#8264d1",
-          600: "#6c4cb8",
-          700: "#583d96",
-          800: "#493378",
-          900: "#3d2c62",
+          50: "rgb(var(--calm-50) / <alpha-value>)",
+          100: "rgb(var(--calm-100) / <alpha-value>)",
+          200: "rgb(var(--calm-200) / <alpha-value>)",
+          300: "rgb(var(--calm-300) / <alpha-value>)",
+          400: "rgb(var(--calm-400) / <alpha-value>)",
+          500: "rgb(var(--calm-500) / <alpha-value>)",
+          600: "rgb(var(--calm-600) / <alpha-value>)",
+          700: "rgb(var(--calm-700) / <alpha-value>)",
+          800: "rgb(var(--calm-800) / <alpha-value>)",
+          900: "rgb(var(--calm-900) / <alpha-value>)",
         },
         sand: {
           50: "#fbfaf7",
@@ -46,13 +48,12 @@ const config: Config = {
       },
       boxShadow: {
         soft: "0 2px 8px -2px rgba(22, 66, 55, 0.08), 0 8px 24px -8px rgba(22, 66, 55, 0.10)",
-        glow: "0 0 0 1px rgba(255,255,255,0.6) inset, 0 8px 30px -8px rgba(130, 100, 209, 0.35)",
+        glow: "0 0 0 1px rgba(255,255,255,0.6) inset, 0 8px 30px -8px rgb(var(--calm-500) / 0.35)",
       },
       backgroundImage: {
-        // The green blobs follow the chosen color theme via the CSS var;
-        // the purple one stays fixed as a secondary accent.
+        // Both blobs follow the chosen color theme's primary/secondary.
         "hero-gradient":
-          "radial-gradient(circle at 15% 20%, rgb(var(--brand-400) / 0.20), transparent 45%), radial-gradient(circle at 85% 0%, rgba(154,128,224,0.18), transparent 40%), radial-gradient(circle at 50% 100%, rgb(var(--brand-400) / 0.12), transparent 50%)",
+          "radial-gradient(circle at 15% 20%, rgb(var(--brand-400) / 0.20), transparent 45%), radial-gradient(circle at 85% 0%, rgb(var(--calm-400) / 0.18), transparent 40%), radial-gradient(circle at 50% 100%, rgb(var(--brand-400) / 0.12), transparent 50%)",
       },
       borderRadius: {
         "2xl": "1.25rem",

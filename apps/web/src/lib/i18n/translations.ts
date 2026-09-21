@@ -1,12 +1,13 @@
 export const translations = {
   de: {
-    "theme.green": "Grün",
-    "theme.ocean": "Ozean",
-    "theme.sunset": "Sonnenuntergang",
-    "theme.lavender": "Lavendel",
+    "theme.classic": "Klassisch",
+    "theme.light": "Hell",
+    "theme.dark": "Dunkel",
+    "theme.muted": "Schlicht",
     "theme.previewLabel": "Vorschau",
     "theme.previewBubble": "Schön, dass du da bist. Wie geht es dir heute?",
     "theme.previewButton": "Jetzt starten",
+    "theme.previewBadge": "Online",
     "theme.pickerTitle": "Wähle deine Farbwelt",
     "theme.pickerSubtitle": "Du kannst das später jederzeit in den Einstellungen ändern.",
 
@@ -259,13 +260,14 @@ export const translations = {
     "authError.generic": "Etwas ist schiefgelaufen. Bitte versuch es erneut.",
   },
   en: {
-    "theme.green": "Green",
-    "theme.ocean": "Ocean",
-    "theme.sunset": "Sunset",
-    "theme.lavender": "Lavender",
+    "theme.classic": "Classic",
+    "theme.light": "Light",
+    "theme.dark": "Dark",
+    "theme.muted": "Muted",
     "theme.previewLabel": "Preview",
     "theme.previewBubble": "Glad you're here. How are you feeling today?",
     "theme.previewButton": "Get started",
+    "theme.previewBadge": "Online",
     "theme.pickerTitle": "Choose your color theme",
     "theme.pickerSubtitle": "You can change this anytime later in settings.",
 

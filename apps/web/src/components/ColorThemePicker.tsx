@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { COLOR_THEMES, type ColorThemeId } from "@/lib/colorThemes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-const THEME_IDS: ColorThemeId[] = ["green", "ocean", "sunset", "lavender"];
+const THEME_IDS: ColorThemeId[] = ["classic", "light", "dark", "muted"];
 
 export function ColorThemePicker({ value, onChange }: { value: ColorThemeId; onChange: (id: ColorThemeId) => void }) {
   const { t } = useLanguage();
@@ -21,6 +21,9 @@ export function ColorThemePicker({ value, onChange }: { value: ColorThemeId; onC
               M
             </span>
             <span className="text-sm font-bold text-slate-700">Mira</span>
+            <span className="ml-auto rounded-full bg-calm-100 px-2 py-0.5 text-[10px] font-semibold text-calm-700">
+              {t("theme.previewBadge")}
+            </span>
           </div>
           <div className="mt-3 max-w-[85%] rounded-2xl rounded-bl-sm bg-brand-50 px-3 py-2 text-xs leading-relaxed text-brand-800">
             {t("theme.previewBubble")}
@@ -50,9 +53,11 @@ export function ColorThemePicker({ value, onChange }: { value: ColorThemeId; onC
             >
               <span
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: theme.swatch }}
+                style={{
+                  background: `linear-gradient(135deg, ${theme.swatchPrimary} 50%, ${theme.swatchSecondary} 50%)`,
+                }}
               >
-                {active && <Check className="h-4 w-4 text-white" />}
+                {active && <Check className="h-4 w-4 text-white drop-shadow" />}
               </span>
               <span className="text-xs font-semibold text-slate-600">{t(theme.nameKey)}</span>
             </button>
