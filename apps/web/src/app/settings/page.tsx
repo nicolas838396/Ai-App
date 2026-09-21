@@ -15,17 +15,12 @@ import {
   type UserProfile,
 } from "@/lib/onboardingOptions";
 import { looksLikeMaleFirstName } from "@/lib/germanMaleFirstNames";
-import {
-  getLanguagePreference,
-  setLanguagePreference,
-  getVoiceGenderPreference,
-  setVoiceGenderPreference,
-  type Language,
-  type VoiceGender,
-} from "@/lib/preferences";
+import { getVoiceGenderPreference, setVoiceGenderPreference, type VoiceGender } from "@/lib/preferences";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function SettingsPage() {
   const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { t, language, setLanguage } = useLanguage();
 
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,11 +38,9 @@ export default function SettingsPage() {
   const [cycleLengthDays, setCycleLengthDays] = useState("28");
   const [showCycleQuestionAnyway, setShowCycleQuestionAnyway] = useState(false);
 
-  const [language, setLanguage] = useState<Language>("de");
   const [voiceGender, setVoiceGender] = useState<VoiceGender>("female");
 
   useEffect(() => {
-    setLanguage(getLanguagePreference());
     setVoiceGender(getVoiceGenderPreference() ?? "female");
   }, []);
 
@@ -65,16 +58,12 @@ export default function SettingsPage() {
         if (profile.lastPeriodStartDate) setLastPeriodStartDate(profile.lastPeriodStartDate.slice(0, 10));
         if (profile.cycleLengthDays) setCycleLengthDays(String(profile.cycleLengthDays));
       })
-      .catch(() => setError("Dein Profil konnte nicht geladen werden."))
+      .catch(() => setError(t("settings.profileLoadError")))
       .finally(() => setLoadingProfile(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   const showCycleQuestion = !looksLikeMaleFirstName(firstName) || showCycleQuestionAnyway;
-
-  function handleLanguageChange(next: Language) {
-    setLanguage(next);
-    setLanguagePreference(next);
-  }
 
   function handleVoiceGenderChange(next: VoiceGender) {
     setVoiceGender(next);
@@ -84,11 +73,11 @@ export default function SettingsPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!firstName.trim() || !birthDate || goals.length === 0 || concerns.length === 0 || !usageFrequency) {
-      setError("Bitte fülle Vorname, Geburtsdatum, mindestens ein Ziel, mindestens eine Angabe zu Beschwerden und die Nutzungshäufigkeit aus.");
+      setError(t("settings.validationError"));
       return;
     }
     if (showCycleQuestion && cycleTrackingEnabled === true && (!lastPeriodStartDate || !cycleLengthDays)) {
-      setError("Bitte gib das Datum deiner letzten Periode und die Zykluslänge an, oder wähle „Nein“.");
+      setError(t("settings.cycleValidationError"));
       return;
     }
     setSaving(true);
@@ -113,7 +102,7 @@ export default function SettingsPage() {
       });
       setSavedAt(new Date().toLocaleTimeString());
     } catch {
-      setError("Deine Änderungen konnten nicht gespeichert werden. Bitte versuch es erneut.");
+      setError(t("settings.saveError"));
     } finally {
       setSaving(false);
     }
@@ -130,17 +119,17 @@ export default function SettingsPage() {
             <SettingsIcon className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <h1 className="text-2xl">Einstellungen</h1>
-            <p className="mt-0.5 text-sm text-slate-500">Dein Profil und deine Präferenzen.</p>
+            <h1 className="text-2xl">{t("settings.title")}</h1>
+            <p className="mt-0.5 text-sm text-slate-500">{t("settings.subtitle")}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
-            <h2 className="font-bold text-slate-800">Deine Angaben</h2>
+            <h2 className="font-bold text-slate-800">{t("settings.yourData")}</h2>
             <div className="mt-4 flex flex-col gap-4">
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Vorname</label>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">{t("settings.firstName")}</label>
                 <input
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -148,7 +137,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Geburtsdatum</label>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">{t("settings.birthDate")}</label>
                 <input
                   type="date"
                   value={birthDate}
@@ -161,18 +150,18 @@ export default function SettingsPage() {
           </section>
 
           <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
-            <h2 className="font-bold text-slate-800">Deine Ziele</h2>
+            <h2 className="font-bold text-slate-800">{t("settings.yourGoals")}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {GOAL_OPTIONS.map((option) => (
                 <Chip key={option.value} active={goals.includes(option.value)} onClick={() => setGoals(toggleValue(goals, option.value))}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </Chip>
               ))}
             </div>
           </section>
 
           <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
-            <h2 className="font-bold text-slate-800">Aktuelle Beschwerden & Belastung</h2>
+            <h2 className="font-bold text-slate-800">{t("settings.currentConcerns")}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {CONCERN_OPTIONS.map((option) => (
                 <Chip
@@ -180,12 +169,12 @@ export default function SettingsPage() {
                   active={concerns.includes(option.value)}
                   onClick={() => setConcerns(toggleValue(concerns, option.value))}
                 >
-                  {option.label}
+                  {t(option.labelKey)}
                 </Chip>
               ))}
             </div>
             <p className="mb-1.5 mt-5 text-sm font-semibold text-slate-700">
-              Belastender Lebensbereich <span className="font-normal text-slate-400">(optional)</span>
+              {t("settings.stressArea")} <span className="font-normal text-slate-400">{t("onboarding.optional")}</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {STRESS_AREA_OPTIONS.map((option) => (
@@ -194,15 +183,15 @@ export default function SettingsPage() {
                   active={stressAreas.includes(option.value)}
                   onClick={() => setStressAreas(toggleValue(stressAreas, option.value))}
                 >
-                  {option.label}
+                  {t(option.labelKey)}
                 </Chip>
               ))}
             </div>
-            <p className="mb-1.5 mt-5 text-sm font-semibold text-slate-700">Nutzungshäufigkeit</p>
+            <p className="mb-1.5 mt-5 text-sm font-semibold text-slate-700">{t("settings.usageFrequency")}</p>
             <div className="flex flex-wrap gap-2">
               {USAGE_FREQUENCY_OPTIONS.map((option) => (
                 <Chip key={option.value} active={usageFrequency === option.value} onClick={() => setUsageFrequency(option.value)}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </Chip>
               ))}
             </div>
@@ -210,21 +199,21 @@ export default function SettingsPage() {
             {showCycleQuestion ? (
               <div className="mt-5">
                 <p className="mb-1.5 text-sm font-semibold text-slate-700">
-                  Menstruationszyklus berücksichtigen? <span className="font-normal text-slate-400">(optional)</span>
+                  {t("settings.cycleQuestion")} <span className="font-normal text-slate-400">{t("onboarding.optional")}</span>
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Chip active={cycleTrackingEnabled === true} onClick={() => setCycleTrackingEnabled(true)}>
-                    Ja
+                    {t("onboarding.yes")}
                   </Chip>
                   <Chip active={cycleTrackingEnabled === false} onClick={() => setCycleTrackingEnabled(false)}>
-                    Nein
+                    {t("onboarding.no")}
                   </Chip>
                 </div>
                 {cycleTrackingEnabled === true && (
                   <div className="mt-3 flex flex-col gap-3 rounded-xl bg-sand-50 p-3.5">
                     <div>
                       <label className="mb-1 block text-xs font-semibold text-slate-600">
-                        Erster Tag deiner letzten Periode
+                        {t("onboarding.lastPeriodLabel")}
                       </label>
                       <input
                         type="date"
@@ -236,7 +225,7 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <label className="mb-1 block text-xs font-semibold text-slate-600">
-                        Durchschnittliche Zykluslänge (Tage)
+                        {t("onboarding.cycleLengthLabel")}
                       </label>
                       <input
                         type="number"
@@ -256,7 +245,7 @@ export default function SettingsPage() {
                 onClick={() => setShowCycleQuestionAnyway(true)}
                 className="mt-4 self-start text-xs font-semibold text-slate-400 underline decoration-dotted hover:text-slate-600"
               >
-                Zyklus-Frage trifft trotzdem auf dich zu? Hier anzeigen
+                {t("onboarding.revealCycleQuestion")}
               </button>
             )}
           </section>
@@ -269,11 +258,11 @@ export default function SettingsPage() {
               disabled={saving}
               className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
             >
-              {saving ? "Speichert…" : "Änderungen speichern"}
+              {saving ? t("settings.saving") : t("settings.save")}
             </button>
             {savedAt && (
               <span className="flex items-center gap-1 text-xs text-brand-700">
-                <CircleCheck className="h-3.5 w-3.5" /> Gespeichert um {savedAt}
+                <CircleCheck className="h-3.5 w-3.5" /> {t("settings.savedAt", { time: savedAt })}
               </span>
             )}
           </div>
@@ -284,14 +273,14 @@ export default function SettingsPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-calm-50 text-calm-600">
               <Languages className="h-[18px] w-[18px]" />
             </span>
-            <h2 className="font-bold text-slate-800">Sprache</h2>
+            <h2 className="font-bold text-slate-800">{t("settings.language")}</h2>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Chip active={language === "de"} onClick={() => handleLanguageChange("de")}>
-              Deutsch
+            <Chip active={language === "de"} onClick={() => setLanguage("de")}>
+              {t("settings.german")}
             </Chip>
-            <Chip active={language === "en"} onClick={() => {}}>
-              English (bald verfügbar)
+            <Chip active={language === "en"} onClick={() => setLanguage("en")}>
+              {t("settings.english")}
             </Chip>
           </div>
         </section>
@@ -301,17 +290,15 @@ export default function SettingsPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
               <Volume2 className="h-[18px] w-[18px]" />
             </span>
-            <h2 className="font-bold text-slate-800">Stimme für die Sprachausgabe</h2>
+            <h2 className="font-bold text-slate-800">{t("settings.voiceTitle")}</h2>
           </div>
-          <p className="mt-1.5 text-sm text-slate-500">
-            Welche Stimme soll Mira im Chat zum Vorlesen der Antworten verwenden?
-          </p>
+          <p className="mt-1.5 text-sm text-slate-500">{t("settings.voiceSubtitle")}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Chip active={voiceGender === "female"} onClick={() => handleVoiceGenderChange("female")}>
-              Weiblich
+              {t("chat.voiceFemale")}
             </Chip>
             <Chip active={voiceGender === "male"} onClick={() => handleVoiceGenderChange("male")}>
-              Männlich
+              {t("chat.voiceMale")}
             </Chip>
           </div>
         </section>
@@ -321,11 +308,9 @@ export default function SettingsPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sand-100 text-slate-500">
               <Sparkles className="h-[18px] w-[18px]" />
             </span>
-            <h2 className="font-bold text-slate-800">Weitere Einstellungen</h2>
+            <h2 className="font-bold text-slate-800">{t("settings.moreSettings")}</h2>
           </div>
-          <p className="mt-1.5 text-sm text-slate-500">
-            Hier kommen mit der Zeit weitere Optionen dazu, z. B. Erinnerungen und Benachrichtigungen.
-          </p>
+          <p className="mt-1.5 text-sm text-slate-500">{t("settings.moreSettingsDesc")}</p>
         </section>
       </main>
     </>

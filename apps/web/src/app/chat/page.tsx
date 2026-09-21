@@ -11,6 +11,7 @@ import { resizeImageForUpload } from "@/lib/imageResize";
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/textToSpeech";
 import { isSttSupported, createSpeechRecognizer } from "@/lib/speechRecognition";
 import { getVoiceGenderPreference, setVoiceGenderPreference, type VoiceGender } from "@/lib/preferences";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface ChatMessage {
   id: string;
@@ -27,7 +28,8 @@ interface ChatConversation {
 }
 
 export default function ChatPage() {
-  const { session, loading: sessionLoading, slow } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { t } = useLanguage();
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -69,8 +71,9 @@ export default function ChatPage() {
           setMessages(latest.messages);
         }
       })
-      .catch(() => setError("Konnte Chat-Verlauf nicht laden."))
+      .catch(() => setError(t("chat.historyError")))
       .finally(() => setLoadingHistory(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   useEffect(() => {
@@ -143,7 +146,7 @@ export default function ChatPage() {
       const dataUrl = await resizeImageForUpload(file);
       setPendingImage(dataUrl);
     } catch (err) {
-      setImageError(err instanceof Error ? err.message : "Bild konnte nicht verarbeitet werden.");
+      setImageError(err instanceof Error ? err.message : t("chat.imageProcessError"));
     }
   }
 
@@ -183,14 +186,14 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, result.message]);
       if (ttsEnabled) void handleSpeakMessage(result.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nachricht konnte nicht gesendet werden. Bitte versuch es erneut.");
+      setError(err instanceof Error ? err.message : t("chat.sendError"));
     } finally {
       setSending(false);
     }
   }
 
   if (sessionLoading || !session) {
-    return <FullscreenLoader label={slow ? "Server wacht gerade auf, das kann etwas dauern…" : "Einen Moment…"} />;
+    return <FullscreenLoader />;
   }
 
   return (
@@ -205,16 +208,14 @@ export default function ChatPage() {
             <Sparkles className="h-4 w-4" />
           </span>
           <div>
-            <h1 className="text-lg font-bold text-slate-800">KI-Begleiter</h1>
-            <p className="text-xs text-slate-500">
-              Kein Ersatz für Therapie – bei akuten Krisen wende dich an professionelle Hilfe.
-            </p>
+            <h1 className="text-lg font-bold text-slate-800">{t("chat.title")}</h1>
+            <p className="text-xs text-slate-500">{t("chat.disclaimer")}</p>
           </div>
           {ttsSupported && (
             <button
               type="button"
               onClick={handleToggleTts}
-              title={ttsEnabled ? "Vorlesen ausschalten" : "Antworten vorlesen"}
+              title={ttsEnabled ? t("chat.disableTts") : t("chat.enableTts")}
               className={`ml-auto flex h-9 w-9 items-center justify-center rounded-full transition ${
                 ttsEnabled ? "bg-brand-500 text-white shadow-soft" : "bg-sand-100 text-slate-500 hover:text-slate-700"
               }`}
@@ -225,13 +226,11 @@ export default function ChatPage() {
         </div>
 
         <div className="mt-4 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
-          {loadingHistory && <p className="text-sm text-slate-400">Lade Verlauf…</p>}
+          {loadingHistory && <p className="text-sm text-slate-400">{t("chat.loadingHistory")}</p>}
           {!loadingHistory && messages.length === 0 && (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-slate-400">
               <Sparkles className="h-8 w-8 text-brand-200" />
-              <p className="max-w-xs text-sm">
-                Schreib etwas, das dich gerade beschäftigt – ich bin da, um zuzuhören.
-              </p>
+              <p className="max-w-xs text-sm">{t("chat.emptyState")}</p>
             </div>
           )}
           {messages.map((message) => (
@@ -257,7 +256,7 @@ export default function ChatPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={message.imageDataUrl}
-                    alt="Angehängtes Bild"
+                    alt={t("chat.attachedImageAlt")}
                     className="mb-2 max-h-56 w-full rounded-xl object-cover"
                   />
                 )}
@@ -270,11 +269,11 @@ export default function ChatPage() {
                   >
                     {speakingMessageId === message.id ? (
                       <>
-                        <Square className="h-3 w-3" /> Stopp
+                        <Square className="h-3 w-3" /> {t("chat.stopSpeaking")}
                       </>
                     ) : (
                       <>
-                        <Volume2 className="h-3 w-3" /> Vorlesen
+                        <Volume2 className="h-3 w-3" /> {t("chat.speak")}
                       </>
                     )}
                   </button>
@@ -300,12 +299,12 @@ export default function ChatPage() {
         {pendingImage && (
           <div className="relative mt-3 inline-flex w-fit">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={pendingImage} alt="Ausgewähltes Bild" className="h-16 w-16 rounded-xl object-cover shadow-soft" />
+            <img src={pendingImage} alt={t("chat.selectedImageAlt")} className="h-16 w-16 rounded-xl object-cover shadow-soft" />
             <button
               type="button"
               onClick={() => setPendingImage(null)}
               className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-white shadow-soft"
-              aria-label="Bild entfernen"
+              aria-label={t("chat.removeImage")}
             >
               <X className="h-3 w-3" />
             </button>
@@ -324,7 +323,7 @@ export default function ChatPage() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-soft transition hover:text-slate-700"
-            title="Bild anhängen"
+            title={t("chat.attachImage")}
           >
             <ImageIcon className="h-4 w-4" />
           </button>
@@ -332,7 +331,7 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={handleToggleListening}
-              title={listening ? "Aufnahme stoppen" : "Nachricht per Sprache eingeben"}
+              title={listening ? t("chat.stopRecording") : t("chat.recordVoice")}
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-soft transition ${
                 listening ? "bg-red-500 text-white" : "bg-white text-slate-500 hover:text-slate-700"
               }`}
@@ -343,7 +342,7 @@ export default function ChatPage() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={listening ? "Ich höre zu…" : "Schreib etwas…"}
+            placeholder={listening ? t("chat.placeholderListening") : t("chat.placeholderDefault")}
             className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm shadow-soft"
           />
           <button
@@ -359,16 +358,14 @@ export default function ChatPage() {
       {showVoicePrompt && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40 px-6">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-soft">
-            <h2 className="text-lg font-bold text-slate-800">Welche Stimme soll Mira nutzen?</h2>
-            <p className="mt-1.5 text-sm text-slate-500">
-              Du kannst das jederzeit in den Einstellungen ändern.
-            </p>
+            <h2 className="text-lg font-bold text-slate-800">{t("chat.voiceModalTitle")}</h2>
+            <p className="mt-1.5 text-sm text-slate-500">{t("chat.voiceModalSubtitle")}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Chip active={false} onClick={() => chooseVoiceGender("female")}>
-                Weiblich
+                {t("chat.voiceFemale")}
               </Chip>
               <Chip active={false} onClick={() => chooseVoiceGender("male")}>
-                Männlich
+                {t("chat.voiceMale")}
               </Chip>
             </div>
           </div>

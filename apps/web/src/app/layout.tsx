@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -17,7 +18,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" className={nunito.variable}>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

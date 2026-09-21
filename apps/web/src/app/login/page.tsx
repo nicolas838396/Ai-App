@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Mail, Lock, User, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { translateAuthError } from "@/lib/authErrors";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +31,7 @@ export default function LoginPage() {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
       if (signInError) {
-        setError(translateAuthError(signInError.message));
+        setError(translateAuthError(signInError.message, language));
         return;
       }
       router.push("/dashboard");
@@ -37,7 +39,7 @@ export default function LoginPage() {
     }
 
     if (!firstName.trim() || !birthDate) {
-      setError("Bitte gib deinen Vornamen und dein Geburtsdatum an.");
+      setError(t("login.missingNameOrBirth"));
       return;
     }
 
@@ -49,14 +51,14 @@ export default function LoginPage() {
     });
     setLoading(false);
     if (signUpError) {
-      setError(translateAuthError(signUpError.message));
+      setError(translateAuthError(signUpError.message, language));
       return;
     }
     if (data.session) {
       router.push("/dashboard");
       return;
     }
-    setInfo("Wir haben dir eine Bestätigungs-E-Mail geschickt. Bitte bestätige sie, dann kannst du dich hier anmelden.");
+    setInfo(t("login.confirmEmailSent"));
     setMode("login");
   }
 
@@ -67,9 +69,9 @@ export default function LoginPage() {
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft">
             <Sparkles className="h-5 w-5" />
           </span>
-          <h1 className="text-2xl">{mode === "login" ? "Willkommen zurück" : "Konto erstellen"}</h1>
+          <h1 className="text-2xl">{mode === "login" ? t("login.welcomeBack") : t("login.createAccount")}</h1>
           <p className="text-sm text-slate-500">
-            {mode === "login" ? "Schön, dass du wieder da bist." : "Schön, dass du dabei bist."}
+            {mode === "login" ? t("login.subtitleLogin") : t("login.subtitleRegister")}
           </p>
         </div>
 
@@ -81,7 +83,7 @@ export default function LoginPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Vorname"
+                  placeholder={t("login.firstNamePlaceholder")}
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm"
@@ -105,7 +107,7 @@ export default function LoginPage() {
             <input
               type="email"
               required
-              placeholder="E-Mail"
+              placeholder={t("login.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm"
@@ -117,7 +119,7 @@ export default function LoginPage() {
               type="password"
               required
               minLength={6}
-              placeholder="Passwort"
+              placeholder={t("login.passwordPlaceholder")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm"
@@ -130,7 +132,7 @@ export default function LoginPage() {
             disabled={loading}
             className="mt-1 rounded-xl bg-brand-500 py-2.5 font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
           >
-            {loading ? "…" : mode === "login" ? "Anmelden" : "Registrieren"}
+            {loading ? "…" : mode === "login" ? t("login.submitLogin") : t("login.submitRegister")}
           </button>
         </form>
 
@@ -143,14 +145,11 @@ export default function LoginPage() {
           }}
           className="mt-4 w-full text-center text-sm font-semibold text-brand-700 hover:text-brand-800"
         >
-          {mode === "login" ? "Noch kein Konto? Registrieren" : "Schon ein Konto? Anmelden"}
+          {mode === "login" ? t("login.toggleToRegister") : t("login.toggleToLogin")}
         </button>
 
-        <Link
-          href="/"
-          className="mt-3 block text-center text-xs text-slate-400 hover:text-slate-500"
-        >
-          ← Zurück zur Startseite
+        <Link href="/" className="mt-3 block text-center text-xs text-slate-400 hover:text-slate-500">
+          {t("login.backToHome")}
         </Link>
       </div>
     </main>

@@ -6,6 +6,7 @@ import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface Activity {
   id: string;
@@ -40,7 +41,8 @@ function isToday(isoDate: string) {
 const MOOD_EMOJI = ["😞", "😕", "😐", "🙂", "😊", "😄", "😁", "🤩", "🥳", "✨"];
 
 export default function JournalPage() {
-  const { session, loading: sessionLoading, slow } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { t } = useLanguage();
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [todaysLogs, setTodaysLogs] = useState<ActivityLog[]>([]);
@@ -120,7 +122,7 @@ export default function JournalPage() {
   }
 
   if (sessionLoading || !session) {
-    return <FullscreenLoader label={slow ? "Server wacht gerade auf, das kann etwas dauern…" : "Einen Moment…"} />;
+    return <FullscreenLoader />;
   }
 
   return (
@@ -128,8 +130,8 @@ export default function JournalPage() {
       <AppNav />
       <main className="mx-auto max-w-2xl space-y-6 px-6 py-8">
         <div>
-          <h1 className="text-2xl">Dein Tagebuch</h1>
-          <p className="mt-1 text-sm text-slate-500">Ein paar Minuten für dich, jeden Tag.</p>
+          <h1 className="text-2xl">{t("journal.title")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t("journal.subtitle")}</p>
         </div>
 
         <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
@@ -137,7 +139,7 @@ export default function JournalPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
               <Smile className="h-[18px] w-[18px]" />
             </span>
-            <h2 className="font-bold text-slate-800">Wie fühlst du dich heute?</h2>
+            <h2 className="font-bold text-slate-800">{t("journal.moodQuestion")}</h2>
           </div>
 
           <form onSubmit={handleMoodSubmit} className="mt-4 flex flex-col gap-3">
@@ -156,7 +158,7 @@ export default function JournalPage() {
             <input
               value={moodNote}
               onChange={(e) => setMoodNote(e.target.value)}
-              placeholder="Kurze Notiz (optional)"
+              placeholder={t("journal.moodNotePlaceholder")}
               className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
             />
             <div className="flex items-center gap-3">
@@ -165,9 +167,11 @@ export default function JournalPage() {
                 disabled={moodSaving}
                 className="rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
               >
-                Stimmung speichern
+                {t("journal.saveMood")}
               </button>
-              {moodSavedAt && <span className="text-xs text-slate-400">Gespeichert um {moodSavedAt}</span>}
+              {moodSavedAt && (
+                <span className="text-xs text-slate-400">{t("journal.savedAt", { time: moodSavedAt })}</span>
+              )}
             </div>
           </form>
 
@@ -191,7 +195,7 @@ export default function JournalPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
               <ListChecks className="h-[18px] w-[18px]" />
             </span>
-            <h2 className="font-bold text-slate-800">Gewohnheiten heute</h2>
+            <h2 className="font-bold text-slate-800">{t("journal.habitsToday")}</h2>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {activities.map((activity) => {
@@ -227,19 +231,19 @@ export default function JournalPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-calm-50 text-calm-600">
               <PenLine className="h-[18px] w-[18px]" />
             </span>
-            <h2 className="font-bold text-slate-800">Tagebucheintrag</h2>
+            <h2 className="font-bold text-slate-800">{t("journal.entryTitle")}</h2>
           </div>
           <form onSubmit={handleJournalSubmit} className="mt-4 flex flex-col gap-3">
             <input
               value={journalTitle}
               onChange={(e) => setJournalTitle(e.target.value)}
-              placeholder="Titel (optional)"
+              placeholder={t("journal.titlePlaceholder")}
               className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
             />
             <textarea
               value={journalContent}
               onChange={(e) => setJournalContent(e.target.value)}
-              placeholder="Was beschäftigt dich heute?"
+              placeholder={t("journal.contentPlaceholder")}
               rows={5}
               className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
             />
@@ -248,7 +252,7 @@ export default function JournalPage() {
               disabled={journalSaving || !journalContent.trim()}
               className="self-start rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
             >
-              Eintrag speichern
+              {t("journal.saveEntry")}
             </button>
           </form>
 
@@ -257,7 +261,7 @@ export default function JournalPage() {
               {journalHistory.map((entry) => (
                 <div key={entry.id} className="rounded-xl bg-sand-50 p-4 text-sm">
                   <div className="flex items-baseline justify-between">
-                    <span className="font-semibold text-slate-700">{entry.title || "Ohne Titel"}</span>
+                    <span className="font-semibold text-slate-700">{entry.title || t("journal.noTitle")}</span>
                     <span className="text-xs text-slate-400">
                       {new Date(entry.createdAt).toLocaleDateString()}
                     </span>

@@ -13,7 +13,7 @@ Antworte warm, kurz und konkret auf Deutsch, sofern der Nutzer nicht in einer an
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const MAX_IMAGES_PER_DAY = 15;
+const MAX_IMAGES_PER_DAY = 3;
 const DATA_URL_PATTERN = /^data:(image\/(?:jpeg|png|webp));base64,([a-zA-Z0-9+/=]+)$/;
 
 // A rough, non-diagnostic cycle-phase estimate from a self-reported last

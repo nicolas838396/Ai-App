@@ -4,17 +4,20 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, MessageCircleHeart, NotebookPen, Wind, LogOut, Sparkles, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
-const LINKS = [
-  { href: "/dashboard", label: "Übersicht", icon: LayoutDashboard },
-  { href: "/chat", label: "Chat", icon: MessageCircleHeart },
-  { href: "/journal", label: "Tagebuch", icon: NotebookPen },
-  { href: "/relax", label: "Entspannung", icon: Wind },
+const LINKS: { href: string; labelKey: TranslationKey; icon: typeof LayoutDashboard }[] = [
+  { href: "/dashboard", labelKey: "nav.overview", icon: LayoutDashboard },
+  { href: "/chat", labelKey: "nav.chat", icon: MessageCircleHeart },
+  { href: "/journal", labelKey: "nav.journal", icon: NotebookPen },
+  { href: "/relax", labelKey: "nav.relax", icon: Wind },
 ];
 
 export function AppNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLanguage();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -45,7 +48,7 @@ export function AppNav() {
                 }`}
               >
                 <link.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{link.label}</span>
+                <span className="hidden sm:inline">{t(link.labelKey)}</span>
               </Link>
             );
           })}
@@ -59,7 +62,7 @@ export function AppNav() {
                 ? "bg-brand-500 text-white shadow-soft"
                 : "text-slate-400 hover:bg-sand-100 hover:text-slate-600"
             }`}
-            aria-label="Einstellungen"
+            aria-label={t("nav.settings")}
           >
             <Settings className="h-4 w-4" />
           </Link>
@@ -68,7 +71,7 @@ export function AppNav() {
             className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-400 transition hover:bg-red-50 hover:text-red-500"
           >
             <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Abmelden</span>
+            <span className="hidden sm:inline">{t("nav.logout")}</span>
           </button>
         </div>
       </div>

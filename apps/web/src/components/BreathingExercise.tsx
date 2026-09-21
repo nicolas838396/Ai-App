@@ -2,17 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Play, Square } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
-const PHASES = [
-  { label: "Einatmen", scale: 1.4 },
-  { label: "Halten", scale: 1.4 },
-  { label: "Ausatmen", scale: 1 },
-  { label: "Halten", scale: 1 },
-] as const;
+const PHASES: { labelKey: TranslationKey; scale: number }[] = [
+  { labelKey: "breathing.inhale", scale: 1.4 },
+  { labelKey: "breathing.hold", scale: 1.4 },
+  { labelKey: "breathing.exhale", scale: 1 },
+  { labelKey: "breathing.hold", scale: 1 },
+];
 
 const PHASE_SECONDS = 4;
 
 export function BreathingExercise() {
+  const { t } = useLanguage();
   const [running, setRunning] = useState(false);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -40,7 +43,7 @@ export function BreathingExercise() {
           className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-calm-400 to-brand-400 text-center text-sm font-bold text-white shadow-glow transition-transform duration-[4000ms] ease-in-out"
           style={{ transform: `scale(${running ? phase.scale : 1})` }}
         >
-          {running ? phase.label : "Bereit"}
+          {running ? t(phase.labelKey) : t("breathing.ready")}
         </div>
       </div>
       <button
@@ -49,11 +52,9 @@ export function BreathingExercise() {
         className="flex items-center gap-2 rounded-full bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-700"
       >
         {running ? <Square className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-        {running ? "Beenden" : "Übung starten"}
+        {running ? t("breathing.stop") : t("breathing.start")}
       </button>
-      <p className="max-w-xs text-center text-xs text-slate-400">
-        Box-Breathing: 4 Sekunden einatmen, 4 Sekunden halten, 4 Sekunden ausatmen, 4 Sekunden halten.
-      </p>
+      <p className="max-w-xs text-center text-xs text-slate-400">{t("breathing.description")}</p>
     </div>
   );
 }

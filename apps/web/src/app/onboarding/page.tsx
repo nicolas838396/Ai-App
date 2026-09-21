@@ -16,11 +16,13 @@ import {
 import { looksLikeMaleFirstName } from "@/lib/germanMaleFirstNames";
 import { markOnboardingComplete } from "@/lib/onboardingCache";
 import { Chip, toggleValue } from "@/components/Chip";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const TOTAL_STEPS = 2;
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const { session, loading: sessionLoading } = useSession({
     requireAuth: true,
     skipOnboardingCheck: true,
@@ -77,7 +79,7 @@ export default function OnboardingPage() {
   function goNext() {
     setError(null);
     if (step === 1 && !step1Valid) {
-      setError("Bitte wähle mindestens ein Ziel aus.");
+      setError(t("onboarding.goalsError"));
       return;
     }
     setStep((s) => Math.min(TOTAL_STEPS, s + 1));
@@ -91,9 +93,7 @@ export default function OnboardingPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!step2Valid) {
-      setError(
-        "Bitte wähle mindestens eine Angabe zu deinen Beschwerden, deine Nutzungshäufigkeit, beantworte die Zyklus-Frage (auch mit „Nein“ möglich) und bestätige die Einwilligung.",
-      );
+      setError(t("onboarding.submitError"));
       return;
     }
     setSubmitting(true);
@@ -118,7 +118,7 @@ export default function OnboardingPage() {
       if (session) markOnboardingComplete(session.user.id);
       router.push("/dashboard");
     } catch {
-      setError("Deine Angaben konnten nicht gespeichert werden. Bitte versuch es erneut.");
+      setError(t("onboarding.saveError"));
       setSubmitting(false);
     }
   }
@@ -132,10 +132,8 @@ export default function OnboardingPage() {
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft">
             <Sparkles className="h-5 w-5" />
           </span>
-          <h1 className="text-2xl">Schön, dass du da bist</h1>
-          <p className="text-sm text-slate-500">
-            Ein paar kurze Fragen, damit Mira dich besser begleiten kann.
-          </p>
+          <h1 className="text-2xl">{t("onboarding.title")}</h1>
+          <p className="text-sm text-slate-500">{t("onboarding.subtitle")}</p>
         </div>
 
         <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-sand-100">
@@ -145,19 +143,19 @@ export default function OnboardingPage() {
           />
         </div>
         <p className="mt-2 text-center text-xs font-medium text-slate-400">
-          Schritt {step} von {TOTAL_STEPS}
+          {t("onboarding.step", { n: step, total: TOTAL_STEPS })}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
           {step === 1 && (
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                Was möchtest du mit Mira erreichen? <span className="font-normal text-slate-400">(Mehrfachauswahl)</span>
+                {t("onboarding.goalsQuestion")} <span className="font-normal text-slate-400">{t("onboarding.multiSelect")}</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {GOAL_OPTIONS.map((option) => (
                   <Chip key={option.value} active={goals.includes(option.value)} onClick={() => setGoals(toggleValue(goals, option.value))}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </Chip>
                 ))}
               </div>
@@ -168,7 +166,8 @@ export default function OnboardingPage() {
             <div className="flex flex-col gap-5">
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Beschäftigt dich aktuell etwas davon? <span className="font-normal text-slate-400">(Mehrfachauswahl)</span>
+                  {t("onboarding.concernsQuestion")}{" "}
+                  <span className="font-normal text-slate-400">{t("onboarding.multiSelect")}</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {CONCERN_OPTIONS.map((option) => (
@@ -177,7 +176,7 @@ export default function OnboardingPage() {
                       active={concerns.includes(option.value)}
                       onClick={() => setConcerns(toggleValue(concerns, option.value))}
                     >
-                      {option.label}
+                      {t(option.labelKey)}
                     </Chip>
                   ))}
                 </div>
@@ -185,8 +184,8 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Wo entsteht gerade am meisten Belastung?{" "}
-                  <span className="font-normal text-slate-400">(optional, Mehrfachauswahl)</span>
+                  {t("onboarding.stressAreaQuestion")}{" "}
+                  <span className="font-normal text-slate-400">{t("onboarding.optionalMultiSelect")}</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {STRESS_AREA_OPTIONS.map((option) => (
@@ -195,7 +194,7 @@ export default function OnboardingPage() {
                       active={stressAreas.includes(option.value)}
                       onClick={() => setStressAreas(toggleValue(stressAreas, option.value))}
                     >
-                      {option.label}
+                      {t(option.labelKey)}
                     </Chip>
                   ))}
                 </div>
@@ -203,12 +202,12 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Wie oft möchtest du Mira nutzen?
+                  {t("onboarding.usageFrequencyQuestion")}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {USAGE_FREQUENCY_OPTIONS.map((option) => (
                     <Chip key={option.value} active={usageFrequency === option.value} onClick={() => setUsageFrequency(option.value)}>
-                      {option.label}
+                      {t(option.labelKey)}
                     </Chip>
                   ))}
                 </div>
@@ -217,19 +216,15 @@ export default function OnboardingPage() {
               {showCycleQuestion ? (
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                    Hast du einen Menstruationszyklus, den Mira berücksichtigen soll?{" "}
-                    <span className="font-normal text-slate-400">(optional)</span>
+                    {t("onboarding.cycleQuestion")} <span className="font-normal text-slate-400">{t("onboarding.optional")}</span>
                   </label>
-                  <p className="mb-2 text-xs text-slate-400">
-                    Manche Beschwerden hängen mit dem Zyklus zusammen – wenn du magst, behält Mira das
-                    im Hinterkopf, ohne es dir vorzuschreiben.
-                  </p>
+                  <p className="mb-2 text-xs text-slate-400">{t("onboarding.cycleExplanation")}</p>
                   <div className="flex flex-wrap gap-2">
                     <Chip active={cycleTrackingEnabled === true} onClick={() => setCycleTrackingEnabled(true)}>
-                      Ja
+                      {t("onboarding.yes")}
                     </Chip>
                     <Chip active={cycleTrackingEnabled === false} onClick={() => setCycleTrackingEnabled(false)}>
-                      Nein
+                      {t("onboarding.no")}
                     </Chip>
                   </div>
 
@@ -237,7 +232,7 @@ export default function OnboardingPage() {
                     <div className="mt-3 flex flex-col gap-3 rounded-xl bg-sand-50 p-3.5">
                       <div>
                         <label className="mb-1 block text-xs font-semibold text-slate-600">
-                          Erster Tag deiner letzten Periode
+                          {t("onboarding.lastPeriodLabel")}
                         </label>
                         <input
                           type="date"
@@ -249,7 +244,7 @@ export default function OnboardingPage() {
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-semibold text-slate-600">
-                          Durchschnittliche Zykluslänge (Tage)
+                          {t("onboarding.cycleLengthLabel")}
                         </label>
                         <input
                           type="number"
@@ -269,7 +264,7 @@ export default function OnboardingPage() {
                   onClick={() => setShowCycleQuestionAnyway(true)}
                   className="self-start text-xs font-semibold text-slate-400 underline decoration-dotted hover:text-slate-600"
                 >
-                  Zyklus-Frage trifft trotzdem auf dich zu? Hier anzeigen
+                  {t("onboarding.revealCycleQuestion")}
                 </button>
               )}
 
@@ -280,10 +275,7 @@ export default function OnboardingPage() {
                   onChange={(e) => setConsent(e.target.checked)}
                   className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-brand-500"
                 />
-                Ich bin damit einverstanden, dass meine Angaben zu Beschwerden, Zielen und –
-                falls angegeben – meinem Zyklus als gesundheitsbezogene Daten verarbeitet werden,
-                um Mira für mich persönlicher zu machen. Ich kann diese Einwilligung jederzeit
-                widerrufen.
+                {t("onboarding.consentText")}
               </label>
             </div>
           )}
@@ -298,7 +290,7 @@ export default function OnboardingPage() {
                 className="flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Zurück
+                {t("onboarding.back")}
               </button>
             ) : (
               <span />
@@ -310,7 +302,7 @@ export default function OnboardingPage() {
                 onClick={goNext}
                 className="flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600"
               >
-                Weiter
+                {t("onboarding.next")}
                 <ArrowRight className="h-4 w-4" />
               </button>
             ) : (
@@ -319,7 +311,7 @@ export default function OnboardingPage() {
                 disabled={submitting}
                 className="flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
               >
-                {submitting ? "…" : "Fertig"}
+                {submitting ? "…" : t("onboarding.finish")}
               </button>
             )}
           </div>

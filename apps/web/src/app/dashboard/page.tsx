@@ -6,6 +6,8 @@ import { MessageCircleHeart, NotebookPen, Wind, CircleCheck, CircleAlert } from 
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
 interface HealthStatus {
   status: string;
@@ -13,32 +15,39 @@ interface HealthStatus {
   timestamp: string;
 }
 
-const FEATURE_CARDS = [
+const FEATURE_CARDS: {
+  icon: typeof MessageCircleHeart;
+  titleKey: TranslationKey;
+  descKey: TranslationKey;
+  href: string;
+  color: string;
+}[] = [
   {
     icon: MessageCircleHeart,
-    title: "KI-Begleiter",
-    description: "Chat mit deinem KI-Begleiter.",
+    titleKey: "dashboard.card1.title",
+    descKey: "dashboard.card1.desc",
     href: "/chat",
     color: "bg-brand-50 text-brand-600",
   },
   {
     icon: NotebookPen,
-    title: "Tagebuch",
-    description: "Stimmung, Gewohnheiten & Gedanken festhalten.",
+    titleKey: "dashboard.card2.title",
+    descKey: "dashboard.card2.desc",
     href: "/journal",
     color: "bg-amber-50 text-amber-600",
   },
   {
     icon: Wind,
-    title: "Entspannung",
-    description: "Beruhigende Klänge & Atemübung.",
+    titleKey: "dashboard.card3.title",
+    descKey: "dashboard.card3.desc",
     href: "/relax",
     color: "bg-calm-50 text-calm-600",
   },
 ];
 
 export default function DashboardPage() {
-  const { session, loading: sessionLoading, slow } = useSession({ requireAuth: true });
+  const { session, loading: sessionLoading } = useSession({ requireAuth: true });
+  const { t } = useLanguage();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,19 +56,20 @@ export default function DashboardPage() {
     fetch(`${apiUrl}/api/health`)
       .then((res) => res.json())
       .then(setHealth)
-      .catch(() => setError("Backend nicht erreichbar"));
+      .catch(() => setError(t("dashboard.backendUnreachable")));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (sessionLoading || !session) {
-    return <FullscreenLoader label={slow ? "Server wacht gerade auf, das kann etwas dauern…" : "Einen Moment…"} />;
+    return <FullscreenLoader />;
   }
 
   return (
     <>
       <AppNav />
       <main className="mx-auto max-w-4xl px-6 py-10">
-        <h1 className="text-2xl">Schön, dich zu sehen 👋</h1>
-        <p className="mt-1 text-slate-500">Was möchtest du heute machen?</p>
+        <h1 className="text-2xl">{t("dashboard.greeting")}</h1>
+        <p className="mt-1 text-slate-500">{t("dashboard.subtitle")}</p>
 
         <div
           className={`mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
@@ -75,21 +85,21 @@ export default function DashboardPage() {
           ) : (
             <CircleCheck className="h-3.5 w-3.5" />
           )}
-          {error ?? (health ? `Alles verbunden · ${new Date(health.timestamp).toLocaleTimeString()}` : "Prüfe Verbindung…")}
+          {error ?? (health ? t("dashboard.allConnected", { time: new Date(health.timestamp).toLocaleTimeString() }) : t("dashboard.checkingConnection"))}
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {FEATURE_CARDS.map((card) => (
             <Link
-              key={card.title}
+              key={card.titleKey}
               href={card.href}
               className="group rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-glow"
             >
               <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.color}`}>
                 <card.icon className="h-5 w-5" />
               </span>
-              <h2 className="mt-4 font-bold text-slate-800">{card.title}</h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{card.description}</p>
+              <h2 className="mt-4 font-bold text-slate-800">{t(card.titleKey)}</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{t(card.descKey)}</p>
             </Link>
           ))}
         </div>
