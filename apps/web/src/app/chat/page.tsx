@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Send, Sparkles, User, Image as ImageIcon, Mic, Square, Volume2, VolumeX, X } from "lucide-react";
+import { Send, Sparkles, User, Image as ImageIcon, Mic, Square, Volume2, VolumeX, X, Headphones } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { Chip } from "@/components/Chip";
@@ -10,7 +10,7 @@ import { apiFetch } from "@/lib/apiClient";
 import { resizeImageForUpload } from "@/lib/imageResize";
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/textToSpeech";
 import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsSpeech";
-import { isSttSupported, createSpeechRecognizer } from "@/lib/speechRecognition";
+import { isSttSupported, createSpeechRecognizer, type SpeechLang } from "@/lib/speechRecognition";
 import { getVoiceGenderPreference, setVoiceGenderPreference, type VoiceGender } from "@/lib/preferences";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -28,9 +28,11 @@ interface ChatConversation {
   messages: ChatMessage[];
 }
 
+type VoiceStatus = "listening" | "thinking" | "speaking";
+
 export default function ChatPage() {
   const { session, loading: sessionLoading } = useSession({ requireAuth: true });
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -38,6 +40,7 @@ export default function ChatPage() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const conversationIdRef = useRef<string | undefined>(undefined);
 
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -53,10 +56,23 @@ export default function ChatPage() {
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<ReturnType<typeof createSpeechRecognizer>>(null);
 
+  const [voiceModeOpen, setVoiceModeOpen] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("listening");
+  const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceActiveRef = useRef(false);
+
+  const sttLang: SpeechLang = language === "en" ? "en-US" : "de-DE";
+
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
+
   useEffect(() => {
     setTtsSupported(isTtsSupported());
     setSttSupported(isSttSupported());
     return () => {
+      voiceActiveRef.current = false;
       stopElevenLabsSpeech();
       stopSpeaking();
       recognitionRef.current?.stop();
@@ -98,6 +114,16 @@ export default function ChatPage() {
     voiceResolverRef.current = null;
   }
 
+  async function speakText(text: string, gender: VoiceGender, onEnd: () => void) {
+    try {
+      await speakWithElevenLabs(text, gender, onEnd);
+    } catch {
+      // ElevenLabs not configured, over its daily budget, or unreachable —
+      // fall back to the browser's built-in voice rather than staying silent.
+      await speak(text, gender, onEnd);
+    }
+  }
+
   async function handleSpeakMessage(message: ChatMessage) {
     if (speakingMessageId === message.id) {
       stopElevenLabsSpeech();
@@ -107,14 +133,9 @@ export default function ChatPage() {
     }
     const gender = await ensureVoiceGenderChosen();
     setSpeakingMessageId(message.id);
-    const clearSpeaking = () => setSpeakingMessageId((current) => (current === message.id ? null : current));
-    try {
-      await speakWithElevenLabs(message.content, gender, clearSpeaking);
-    } catch {
-      // ElevenLabs not configured, over its daily budget, or unreachable —
-      // fall back to the browser's built-in voice rather than staying silent.
-      await speak(message.content, gender, clearSpeaking);
-    }
+    await speakText(message.content, gender, () =>
+      setSpeakingMessageId((current) => (current === message.id ? null : current)),
+    );
   }
 
   async function handleToggleTts() {
@@ -141,6 +162,7 @@ export default function ChatPage() {
         setListening(false);
         recognitionRef.current = null;
       },
+      { continuous: true, lang: sttLang },
     );
     if (!recognizer) return;
     recognitionRef.current = recognizer;
@@ -159,6 +181,20 @@ export default function ChatPage() {
     } catch (err) {
       setImageError(err instanceof Error ? err.message : t("chat.imageProcessError"));
     }
+  }
+
+  async function sendChatMessage(content: string, imageDataUrl?: string | null): Promise<ChatMessage> {
+    const result = await apiFetch<{ conversationId: string; message: ChatMessage }>("/chat/message", {
+      method: "POST",
+      body: JSON.stringify({
+        conversationId: conversationIdRef.current,
+        content,
+        ...(imageDataUrl ? { imageDataUrl } : {}),
+      }),
+    });
+    setConversationId(result.conversationId);
+    setMessages((prev) => [...prev, result.message]);
+    return result.message;
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -185,21 +221,89 @@ export default function ChatPage() {
     setError(null);
 
     try {
-      const result = await apiFetch<{ conversationId: string; message: ChatMessage }>("/chat/message", {
-        method: "POST",
-        body: JSON.stringify({
-          conversationId,
-          content,
-          ...(imageToSend ? { imageDataUrl: imageToSend } : {}),
-        }),
-      });
-      setConversationId(result.conversationId);
-      setMessages((prev) => [...prev, result.message]);
-      if (ttsEnabled) void handleSpeakMessage(result.message);
+      const assistantMessage = await sendChatMessage(content, imageToSend);
+      if (ttsEnabled) void handleSpeakMessage(assistantMessage);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("chat.sendError"));
     } finally {
       setSending(false);
+    }
+  }
+
+  // --- Voice mode: a hands-free listen → send → hear-reply → listen-again loop ---
+
+  function openVoiceMode() {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+    }
+    voiceActiveRef.current = true;
+    setVoiceModeOpen(true);
+    setVoiceError(null);
+    void runVoiceTurn();
+  }
+
+  function closeVoiceMode() {
+    voiceActiveRef.current = false;
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    stopElevenLabsSpeech();
+    stopSpeaking();
+    setVoiceModeOpen(false);
+    setVoiceTranscript("");
+  }
+
+  async function runVoiceTurn() {
+    if (!voiceActiveRef.current) return;
+    const gender = await ensureVoiceGenderChosen();
+    if (!voiceActiveRef.current) return;
+
+    setVoiceStatus("listening");
+    setVoiceTranscript("");
+
+    let latestTranscript = "";
+    const recognizer = createSpeechRecognizer(
+      (transcript) => {
+        latestTranscript = transcript;
+        setVoiceTranscript(transcript);
+      },
+      () => {
+        recognitionRef.current = null;
+        if (!voiceActiveRef.current) return;
+        const finalText = latestTranscript.trim();
+        if (!finalText) {
+          void runVoiceTurn();
+          return;
+        }
+        void handleVoiceUtterance(finalText, gender);
+      },
+      { continuous: false, lang: sttLang },
+    );
+
+    if (!recognizer) {
+      setVoiceError(t("chat.voiceNotSupported"));
+      return;
+    }
+    recognitionRef.current = recognizer;
+    recognizer.start();
+  }
+
+  async function handleVoiceUtterance(content: string, gender: VoiceGender) {
+    setVoiceStatus("thinking");
+    setMessages((prev) => [
+      ...prev,
+      { id: `temp-${Date.now()}`, role: "user", content, createdAt: new Date().toISOString() },
+    ]);
+    try {
+      const assistantMessage = await sendChatMessage(content);
+      if (!voiceActiveRef.current) return;
+      setVoiceStatus("speaking");
+      await speakText(assistantMessage.content, gender, () => {
+        if (voiceActiveRef.current) void runVoiceTurn();
+      });
+    } catch (err) {
+      if (!voiceActiveRef.current) return;
+      setVoiceError(err instanceof Error ? err.message : t("chat.sendError"));
     }
   }
 
@@ -222,18 +326,30 @@ export default function ChatPage() {
             <h1 className="text-lg font-bold text-slate-800">{t("chat.title")}</h1>
             <p className="text-xs text-slate-500">{t("chat.disclaimer")}</p>
           </div>
-          {ttsSupported && (
-            <button
-              type="button"
-              onClick={handleToggleTts}
-              title={ttsEnabled ? t("chat.disableTts") : t("chat.enableTts")}
-              className={`ml-auto flex h-9 w-9 items-center justify-center rounded-full transition ${
-                ttsEnabled ? "bg-brand-500 text-white shadow-soft" : "bg-sand-100 text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            </button>
-          )}
+          <div className="ml-auto flex items-center gap-1.5">
+            {sttSupported && (
+              <button
+                type="button"
+                onClick={openVoiceMode}
+                title={t("chat.startVoiceMode")}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-sand-100 text-slate-500 transition hover:text-slate-700"
+              >
+                <Headphones className="h-4 w-4" />
+              </button>
+            )}
+            {ttsSupported && (
+              <button
+                type="button"
+                onClick={handleToggleTts}
+                title={ttsEnabled ? t("chat.disableTts") : t("chat.enableTts")}
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                  ttsEnabled ? "bg-brand-500 text-white shadow-soft" : "bg-sand-100 text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
@@ -380,6 +496,46 @@ export default function ChatPage() {
               </Chip>
             </div>
           </div>
+        </div>
+      )}
+
+      {voiceModeOpen && (
+        <div className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-slate-900/95 px-6 text-center">
+          <div className="relative flex h-40 w-40 items-center justify-center">
+            <span
+              className={`absolute inset-0 rounded-full bg-brand-500/30 ${
+                voiceStatus === "listening" ? "animate-ping" : voiceStatus === "speaking" ? "animate-pulse" : ""
+              }`}
+            />
+            <span
+              className={`flex h-28 w-28 items-center justify-center rounded-full text-white shadow-glow ${
+                voiceStatus === "thinking" ? "animate-pulse bg-calm-500" : "bg-brand-500"
+              }`}
+            >
+              {voiceStatus === "listening" && <Mic className="h-10 w-10" />}
+              {voiceStatus === "thinking" && <Sparkles className="h-10 w-10" />}
+              {voiceStatus === "speaking" && <Volume2 className="h-10 w-10" />}
+            </span>
+          </div>
+
+          <p className="mt-8 text-lg font-semibold text-white">
+            {voiceStatus === "listening" && t("chat.voiceModeListening")}
+            {voiceStatus === "thinking" && t("chat.voiceModeThinking")}
+            {voiceStatus === "speaking" && t("chat.voiceModeSpeaking")}
+          </p>
+          <p className="mt-2 min-h-[1.5rem] max-w-sm text-sm text-slate-300">
+            {voiceTranscript || (voiceStatus === "listening" ? t("chat.voiceModeHint") : "")}
+          </p>
+          {voiceError && <p className="mt-2 max-w-sm text-sm text-red-400">{voiceError}</p>}
+
+          <button
+            type="button"
+            onClick={closeVoiceMode}
+            className="mt-10 flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+          >
+            <X className="h-4 w-4" />
+            {t("chat.voiceModeEnd")}
+          </button>
         </div>
       )}
     </>
