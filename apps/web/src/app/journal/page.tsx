@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Smile, ListChecks, PenLine } from "lucide-react";
+import { Smile, ListChecks, PenLine, LineChart } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { MoodTrendChart } from "@/components/journal/MoodTrendChart";
+import { MoodCalendar } from "@/components/journal/MoodCalendar";
+import { ActivityCorrelation } from "@/components/journal/ActivityCorrelation";
+import { WeekAndStreakStats } from "@/components/journal/WeekAndStreakStats";
 
 interface Activity {
   id: string;
@@ -133,6 +137,26 @@ export default function JournalPage() {
           <h1 className="text-2xl">{t("journal.title")}</h1>
           <p className="mt-1 text-sm text-slate-500">{t("journal.subtitle")}</p>
         </div>
+
+        <div className="flex items-center gap-2 pt-1 text-slate-500">
+          <LineChart className="h-4 w-4" />
+          <h2 className="text-sm font-bold uppercase tracking-wide">{t("analytics.sectionLabel")}</h2>
+        </div>
+
+        <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <WeekAndStreakStats entries={moodHistory} />
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <MoodTrendChart entries={moodHistory} />
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <MoodCalendar entries={moodHistory} />
+        </section>
+
+        <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <ActivityCorrelation />
+        </section>
 
         <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
           <div className="flex items-center gap-2.5">
