@@ -33,6 +33,7 @@ model User {
   journalEntries JournalEntry[]
   activityLogs   ActivityLog[]
   conversations  ChatConversation[]
+  ttsRequests    TtsRequest[]
 
   @@map("users")
 }
@@ -111,4 +112,18 @@ model ChatMessage {
 
   @@index([conversationId, createdAt])
   @@map("chat_messages")
+}
+
+// One row per text-to-speech call via ElevenLabs, purely so we can enforce a
+// per-user daily character budget and keep the (paid, per-character) voice
+// API cost predictable.
+model TtsRequest {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characterCount Int
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("tts_requests")
 }

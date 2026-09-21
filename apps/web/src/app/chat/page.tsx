@@ -9,6 +9,7 @@ import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
 import { resizeImageForUpload } from "@/lib/imageResize";
 import { isTtsSupported, speak, stopSpeaking } from "@/lib/textToSpeech";
+import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsSpeech";
 import { isSttSupported, createSpeechRecognizer } from "@/lib/speechRecognition";
 import { getVoiceGenderPreference, setVoiceGenderPreference, type VoiceGender } from "@/lib/preferences";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -56,6 +57,7 @@ export default function ChatPage() {
     setTtsSupported(isTtsSupported());
     setSttSupported(isSttSupported());
     return () => {
+      stopElevenLabsSpeech();
       stopSpeaking();
       recognitionRef.current?.stop();
     };
@@ -98,18 +100,27 @@ export default function ChatPage() {
 
   async function handleSpeakMessage(message: ChatMessage) {
     if (speakingMessageId === message.id) {
+      stopElevenLabsSpeech();
       stopSpeaking();
       setSpeakingMessageId(null);
       return;
     }
     const gender = await ensureVoiceGenderChosen();
     setSpeakingMessageId(message.id);
-    await speak(message.content, gender, () => setSpeakingMessageId((current) => (current === message.id ? null : current)));
+    const clearSpeaking = () => setSpeakingMessageId((current) => (current === message.id ? null : current));
+    try {
+      await speakWithElevenLabs(message.content, gender, clearSpeaking);
+    } catch {
+      // ElevenLabs not configured, over its daily budget, or unreachable —
+      // fall back to the browser's built-in voice rather than staying silent.
+      await speak(message.content, gender, clearSpeaking);
+    }
   }
 
   async function handleToggleTts() {
     if (ttsEnabled) {
       setTtsEnabled(false);
+      stopElevenLabsSpeech();
       stopSpeaking();
       setSpeakingMessageId(null);
       return;

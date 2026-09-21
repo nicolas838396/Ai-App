@@ -8,6 +8,9 @@ export const envSchema = z.object({
   SUPABASE_URL: z.string().url(),
   ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required"),
   ANTHROPIC_MODEL: z.string().min(1).default("claude-sonnet-5"),
+  // Optional: without it, the read-aloud feature falls back to the
+  // browser's built-in speech synthesis instead of ElevenLabs' voices.
+  ELEVENLABS_API_KEY: z.string().min(1).optional(),
   CORS_ORIGIN: z
     .string()
     .trim()
