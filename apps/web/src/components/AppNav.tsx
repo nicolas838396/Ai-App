@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, MessageCircleHeart, NotebookPen, Wind, LogOut, Sparkles, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  MessageCircleHeart,
+  NotebookPen,
+  LineChart,
+  Wind,
+  LogOut,
+  Sparkles,
+  Settings,
+} from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -11,6 +20,7 @@ const LINKS: { href: string; labelKey: TranslationKey; icon: typeof LayoutDashbo
   { href: "/dashboard", labelKey: "nav.overview", icon: LayoutDashboard },
   { href: "/chat", labelKey: "nav.chat", icon: MessageCircleHeart },
   { href: "/journal", labelKey: "nav.journal", icon: NotebookPen },
+  { href: "/statistics", labelKey: "nav.statistics", icon: LineChart },
   { href: "/relax", labelKey: "nav.relax", icon: Wind },
 ];
 

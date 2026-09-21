@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MessageCircleHeart, NotebookPen, Wind, CircleCheck, CircleAlert } from "lucide-react";
+import { MessageCircleHeart, NotebookPen, LineChart, Wind, CircleCheck, CircleAlert } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
@@ -37,11 +37,18 @@ const FEATURE_CARDS: {
     color: "bg-amber-50 text-amber-600",
   },
   {
+    icon: LineChart,
+    titleKey: "dashboard.card4.title",
+    descKey: "dashboard.card4.desc",
+    href: "/statistics",
+    color: "bg-calm-50 text-calm-600",
+  },
+  {
     icon: Wind,
     titleKey: "dashboard.card3.title",
     descKey: "dashboard.card3.desc",
     href: "/relax",
-    color: "bg-calm-50 text-calm-600",
+    color: "bg-sky-50 text-sky-600",
   },
 ];
 
@@ -88,7 +95,7 @@ export default function DashboardPage() {
           {error ?? (health ? t("dashboard.allConnected", { time: new Date(health.timestamp).toLocaleTimeString() }) : t("dashboard.checkingConnection"))}
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURE_CARDS.map((card) => (
             <Link
               key={card.titleKey}

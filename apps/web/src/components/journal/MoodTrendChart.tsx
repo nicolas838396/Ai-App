@@ -16,7 +16,7 @@ function scoreToY(score: number): number {
 
 export function MoodTrendChart({ entries }: { entries: MoodEntryLite[] }) {
   const { t, language } = useLanguage();
-  const [range, setRange] = useState<7 | 30>(30);
+  const [range, setRange] = useState<7 | 30 | 90>(30);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
 
@@ -71,7 +71,7 @@ export function MoodTrendChart({ entries }: { entries: MoodEntryLite[] }) {
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-slate-800">{t("analytics.trendTitle")}</h3>
         <div className="flex gap-1 rounded-full bg-sand-100 p-0.5">
-          {([7, 30] as const).map((r) => (
+          {([7, 30, 90] as const).map((r) => (
             <button
               key={r}
               type="button"
@@ -80,7 +80,7 @@ export function MoodTrendChart({ entries }: { entries: MoodEntryLite[] }) {
                 range === r ? "bg-white text-brand-700 shadow-soft" : "text-slate-500"
               }`}
             >
-              {r === 7 ? t("analytics.trend7d") : t("analytics.trend30d")}
+              {r === 7 ? t("analytics.trend7d") : r === 30 ? t("analytics.trend30d") : t("analytics.trend3m")}
             </button>
           ))}
         </div>
@@ -108,11 +108,11 @@ export function MoodTrendChart({ entries }: { entries: MoodEntryLite[] }) {
                 vectorEffect="non-scaling-stroke"
               />
             ))}
-            <path d={areaPath} fill="#339d7c" fillOpacity={0.1} stroke="none" />
+            <path d={areaPath} className="fill-brand-500" fillOpacity={0.1} stroke="none" />
             <path
               d={linePath}
               fill="none"
-              stroke="#339d7c"
+              className="stroke-brand-500"
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -125,11 +125,11 @@ export function MoodTrendChart({ entries }: { entries: MoodEntryLite[] }) {
                   x2={hovered.x}
                   y1={PAD_TOP}
                   y2={CHART_H - PAD_BOTTOM}
-                  stroke="#8ad3b8"
+                  className="stroke-brand-300"
                   strokeWidth={1}
                   vectorEffect="non-scaling-stroke"
                 />
-                <circle cx={hovered.x} cy={hovered.y} r={4} fill="#339d7c" stroke="#fff" strokeWidth={2} />
+                <circle cx={hovered.x} cy={hovered.y} r={4} className="fill-brand-500" stroke="#fff" strokeWidth={2} />
               </>
             )}
             <rect

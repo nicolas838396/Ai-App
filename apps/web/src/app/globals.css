@@ -101,3 +101,24 @@ textarea {
 .pigeon-wing {
   animation: pigeon-wing-flap 0.7s ease-in-out infinite;
 }
+
+@keyframes medal-unlock {
+  0% {
+    transform: scale(0.3) rotate(-15deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(8deg);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.95) rotate(-4deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.medal-unlock {
+  animation: medal-unlock 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
