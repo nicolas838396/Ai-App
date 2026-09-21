@@ -4,6 +4,19 @@
 
 :root {
   color-scheme: light;
+
+  /* Default (green) brand scale as "R G B" triplets — overwritten at
+     runtime by lib/colorThemes.ts based on the user's chosen palette. */
+  --brand-50: 240 250 246;
+  --brand-100: 219 243 232;
+  --brand-200: 184 230 211;
+  --brand-300: 138 211 184;
+  --brand-400: 87 185 152;
+  --brand-500: 51 157 124;
+  --brand-600: 36 127 100;
+  --brand-700: 30 101 81;
+  --brand-800: 26 81 66;
+  --brand-900: 22 66 55;
 }
 
 body {

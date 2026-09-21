@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Settings as SettingsIcon, Languages, Volume2, Sparkles, CircleCheck } from "lucide-react";
+import { Settings as SettingsIcon, Languages, Volume2, Sparkles, CircleCheck, Palette } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { Chip, toggleValue } from "@/components/Chip";
@@ -17,10 +17,13 @@ import {
 import { looksLikeMaleFirstName } from "@/lib/germanMaleFirstNames";
 import { getVoiceGenderPreference, setVoiceGenderPreference, type VoiceGender } from "@/lib/preferences";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useColorTheme } from "@/lib/ColorThemeContext";
+import { ColorThemePicker } from "@/components/ColorThemePicker";
 
 export default function SettingsPage() {
   const { session, loading: sessionLoading } = useSession({ requireAuth: true });
   const { t, language, setLanguage } = useLanguage();
+  const { colorTheme, setColorTheme } = useColorTheme();
 
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -282,6 +285,18 @@ export default function SettingsPage() {
             <Chip active={language === "en"} onClick={() => setLanguage("en")}>
               {t("settings.english")}
             </Chip>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <Palette className="h-[18px] w-[18px]" />
+            </span>
+            <h2 className="font-bold text-slate-800">{t("theme.pickerTitle")}</h2>
+          </div>
+          <div className="mt-4">
+            <ColorThemePicker value={colorTheme} onChange={setColorTheme} />
           </div>
         </section>
 

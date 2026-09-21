@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MessageCircleHeart, NotebookPen, Wind, Sparkles, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { HeroIllustration } from "@/components/HeroIllustration";
 
 const FEATURES: { icon: typeof MessageCircleHeart; titleKey: TranslationKey; descKey: TranslationKey }[] = [
   { icon: MessageCircleHeart, titleKey: "landing.feature1.title", descKey: "landing.feature1.desc" },
@@ -48,6 +49,7 @@ export default function LandingPage() {
           {t("landing.cta")}
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
         </Link>
+        <HeroIllustration className="mt-4 w-full max-w-md" />
       </section>
 
       <section className="mx-auto max-w-5xl px-6 pb-24">

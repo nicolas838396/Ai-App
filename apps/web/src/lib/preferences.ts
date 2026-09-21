@@ -1,10 +1,14 @@
-// Lightweight client-only preferences (voice + language). These don't need
-// to sync across devices, so localStorage is enough — no backend field.
+// Lightweight client-only preferences (voice + language + color theme).
+// These don't need to sync across devices, so localStorage is enough — no
+// backend field.
+import { DEFAULT_COLOR_THEME, type ColorThemeId } from "./colorThemes";
+
 export type VoiceGender = "female" | "male";
 export type Language = "de" | "en";
 
 const VOICE_KEY = "mira:voice-gender";
 const LANG_KEY = "mira:language";
+const COLOR_THEME_KEY = "mira:color-theme";
 
 export function getVoiceGenderPreference(): VoiceGender | null {
   try {
@@ -35,6 +39,25 @@ export function getLanguagePreference(): Language {
 export function setLanguagePreference(lang: Language) {
   try {
     localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    // ignore
+  }
+}
+
+const VALID_THEME_IDS: ColorThemeId[] = ["green", "ocean", "sunset", "lavender"];
+
+export function getColorThemePreference(): ColorThemeId {
+  try {
+    const value = localStorage.getItem(COLOR_THEME_KEY);
+    return (VALID_THEME_IDS as string[]).includes(value ?? "") ? (value as ColorThemeId) : DEFAULT_COLOR_THEME;
+  } catch {
+    return DEFAULT_COLOR_THEME;
+  }
+}
+
+export function setColorThemePreference(theme: ColorThemeId) {
+  try {
+    localStorage.setItem(COLOR_THEME_KEY, theme);
   } catch {
     // ignore
   }

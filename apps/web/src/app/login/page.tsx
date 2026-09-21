@@ -7,10 +7,13 @@ import { Sparkles, Mail, Lock, User, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { translateAuthError } from "@/lib/authErrors";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useColorTheme } from "@/lib/ColorThemeContext";
+import { ColorThemePicker } from "@/components/ColorThemePicker";
 
 export default function LoginPage() {
   const router = useRouter();
   const { t, language } = useLanguage();
+  const { colorTheme, setColorTheme } = useColorTheme();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,7 +67,11 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-hero-gradient px-6">
-      <div className="w-full max-w-sm rounded-3xl bg-white/90 p-8 shadow-soft ring-1 ring-black/5 backdrop-blur-sm">
+      <div
+        className={`w-full rounded-3xl bg-white/90 p-8 shadow-soft ring-1 ring-black/5 backdrop-blur-sm transition-all ${
+          mode === "register" ? "max-w-lg" : "max-w-sm"
+        }`}
+      >
         <div className="flex flex-col items-center gap-2 text-center">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft">
             <Sparkles className="h-5 w-5" />
@@ -99,6 +106,14 @@ export default function LoginPage() {
                   onChange={(e) => setBirthDate(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm"
                 />
+              </div>
+
+              <div className="pt-1">
+                <h2 className="text-sm font-bold text-slate-700">{t("theme.pickerTitle")}</h2>
+                <p className="text-xs text-slate-400">{t("theme.pickerSubtitle")}</p>
+                <div className="mt-3">
+                  <ColorThemePicker value={colorTheme} onChange={setColorTheme} />
+                </div>
               </div>
             </>
           )}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { ColorThemeProvider } from "@/lib/ColorThemeContext";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -19,7 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="de" className={nunito.variable}>
       <body>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <ColorThemeProvider>{children}</ColorThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

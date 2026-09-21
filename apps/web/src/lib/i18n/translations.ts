@@ -1,5 +1,15 @@
 export const translations = {
   de: {
+    "theme.green": "Grün",
+    "theme.ocean": "Ozean",
+    "theme.sunset": "Sonnenuntergang",
+    "theme.lavender": "Lavendel",
+    "theme.previewLabel": "Vorschau",
+    "theme.previewBubble": "Schön, dass du da bist. Wie geht es dir heute?",
+    "theme.previewButton": "Jetzt starten",
+    "theme.pickerTitle": "Wähle deine Farbwelt",
+    "theme.pickerSubtitle": "Du kannst das später jederzeit in den Einstellungen ändern.",
+
     "nav.overview": "Übersicht",
     "nav.chat": "Chat",
     "nav.journal": "Tagebuch",
@@ -249,6 +259,16 @@ export const translations = {
     "authError.generic": "Etwas ist schiefgelaufen. Bitte versuch es erneut.",
   },
   en: {
+    "theme.green": "Green",
+    "theme.ocean": "Ocean",
+    "theme.sunset": "Sunset",
+    "theme.lavender": "Lavender",
+    "theme.previewLabel": "Preview",
+    "theme.previewBubble": "Glad you're here. How are you feeling today?",
+    "theme.previewButton": "Get started",
+    "theme.pickerTitle": "Choose your color theme",
+    "theme.pickerSubtitle": "You can change this anytime later in settings.",
+
     "nav.overview": "Overview",
     "nav.chat": "Chat",
     "nav.journal": "Journal",
