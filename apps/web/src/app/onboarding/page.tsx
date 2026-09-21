@@ -12,6 +12,7 @@ import {
   USAGE_FREQUENCY_OPTIONS,
   type UserProfile,
 } from "@/lib/onboardingOptions";
+import { looksLikeMaleFirstName } from "@/lib/germanMaleFirstNames";
 
 const TOTAL_STEPS = 3;
 
@@ -65,6 +66,7 @@ export default function OnboardingPage() {
   const [lastPeriodStartDate, setLastPeriodStartDate] = useState("");
   const [cycleLengthDays, setCycleLengthDays] = useState("28");
   const [consent, setConsent] = useState(false);
+  const [showCycleQuestionAnyway, setShowCycleQuestionAnyway] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -86,10 +88,17 @@ export default function OnboardingPage() {
 
   const step1Valid = firstName.trim().length > 0 && birthDate.length > 0;
   const step2Valid = goals.length > 0;
+  const showCycleQuestion = !looksLikeMaleFirstName(firstName) || showCycleQuestionAnyway;
   const cycleValid =
-    cycleTrackingEnabled === false || (cycleTrackingEnabled === true && lastPeriodStartDate.length > 0 && cycleLengthDays.length > 0);
+    !showCycleQuestion ||
+    cycleTrackingEnabled === false ||
+    (cycleTrackingEnabled === true && lastPeriodStartDate.length > 0 && cycleLengthDays.length > 0);
   const step3Valid =
-    concerns.length > 0 && usageFrequency.length > 0 && cycleTrackingEnabled !== null && cycleValid && consent;
+    concerns.length > 0 &&
+    usageFrequency.length > 0 &&
+    (!showCycleQuestion || cycleTrackingEnabled !== null) &&
+    cycleValid &&
+    consent;
 
   function goNext() {
     setError(null);
@@ -129,8 +138,8 @@ export default function OnboardingPage() {
           concerns,
           stressAreas,
           usageFrequency,
-          cycleTrackingEnabled: cycleTrackingEnabled === true,
-          ...(cycleTrackingEnabled
+          cycleTrackingEnabled: showCycleQuestion && cycleTrackingEnabled === true,
+          ...(showCycleQuestion && cycleTrackingEnabled
             ? { lastPeriodStartDate, cycleLengthDays: Number(cycleLengthDays) }
             : {}),
           healthDataConsent: consent,
@@ -260,54 +269,64 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Hast du einen Menstruationszyklus, den Mira berücksichtigen soll?{" "}
-                  <span className="font-normal text-slate-400">(optional)</span>
-                </label>
-                <p className="mb-2 text-xs text-slate-400">
-                  Manche Beschwerden hängen mit dem Zyklus zusammen – wenn du magst, behält Mira das
-                  im Hinterkopf, ohne es dir vorzuschreiben.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Chip active={cycleTrackingEnabled === true} onClick={() => setCycleTrackingEnabled(true)}>
-                    Ja
-                  </Chip>
-                  <Chip active={cycleTrackingEnabled === false} onClick={() => setCycleTrackingEnabled(false)}>
-                    Nein
-                  </Chip>
-                </div>
-
-                {cycleTrackingEnabled === true && (
-                  <div className="mt-3 flex flex-col gap-3 rounded-xl bg-sand-50 p-3.5">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-600">
-                        Erster Tag deiner letzten Periode
-                      </label>
-                      <input
-                        type="date"
-                        value={lastPeriodStartDate}
-                        max={new Date().toISOString().slice(0, 10)}
-                        onChange={(e) => setLastPeriodStartDate(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-600">
-                        Durchschnittliche Zykluslänge (Tage)
-                      </label>
-                      <input
-                        type="number"
-                        min={15}
-                        max={45}
-                        value={cycleLengthDays}
-                        onChange={(e) => setCycleLengthDays(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
-                      />
-                    </div>
+              {showCycleQuestion ? (
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                    Hast du einen Menstruationszyklus, den Mira berücksichtigen soll?{" "}
+                    <span className="font-normal text-slate-400">(optional)</span>
+                  </label>
+                  <p className="mb-2 text-xs text-slate-400">
+                    Manche Beschwerden hängen mit dem Zyklus zusammen – wenn du magst, behält Mira das
+                    im Hinterkopf, ohne es dir vorzuschreiben.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Chip active={cycleTrackingEnabled === true} onClick={() => setCycleTrackingEnabled(true)}>
+                      Ja
+                    </Chip>
+                    <Chip active={cycleTrackingEnabled === false} onClick={() => setCycleTrackingEnabled(false)}>
+                      Nein
+                    </Chip>
                   </div>
-                )}
-              </div>
+
+                  {cycleTrackingEnabled === true && (
+                    <div className="mt-3 flex flex-col gap-3 rounded-xl bg-sand-50 p-3.5">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-600">
+                          Erster Tag deiner letzten Periode
+                        </label>
+                        <input
+                          type="date"
+                          value={lastPeriodStartDate}
+                          max={new Date().toISOString().slice(0, 10)}
+                          onChange={(e) => setLastPeriodStartDate(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-600">
+                          Durchschnittliche Zykluslänge (Tage)
+                        </label>
+                        <input
+                          type="number"
+                          min={15}
+                          max={45}
+                          value={cycleLengthDays}
+                          onChange={(e) => setCycleLengthDays(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowCycleQuestionAnyway(true)}
+                  className="self-start text-xs font-semibold text-slate-400 underline decoration-dotted hover:text-slate-600"
+                >
+                  Zyklus-Frage trifft trotzdem auf dich zu? Hier anzeigen
+                </button>
+              )}
 
               <label className="flex items-start gap-2.5 rounded-xl bg-sand-50 p-3.5 text-xs leading-relaxed text-slate-600">
                 <input
