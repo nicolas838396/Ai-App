@@ -51,3 +51,64 @@ export async function speak(text: string, gender: VoiceGender, onEnd?: () => voi
 export function stopSpeaking() {
   if (isTtsSupported()) window.speechSynthesis.cancel();
 }
+
+// Splits into sentence-bounded chunks capped at ~maxLen characters. Speaking
+// one very long SpeechSynthesisUtterance is unreliable across browsers —
+// notably Safari/WebKit (relevant since this app is tested on iPad Safari),
+// which can silently stop partway through a long utterance — so long-form
+// text (like a multi-minute bedtime story) is read as a chained sequence of
+// shorter utterances instead.
+function splitIntoSpeechChunks(text: string, maxLen = 200): string[] {
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const chunks: string[] = [];
+  let current = "";
+  for (const sentence of sentences) {
+    const candidate = current ? `${current} ${sentence}` : sentence;
+    if (candidate.length > maxLen && current) {
+      chunks.push(current.trim());
+      current = sentence;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
+}
+
+export interface LongSpeechHandle {
+  stop: () => void;
+}
+
+/** Reads long-form text aloud chunk by chunk; `onProgress` gets (chunkIndex, totalChunks) before each chunk starts. */
+export function speakLong(
+  text: string,
+  gender: VoiceGender,
+  onProgress?: (chunkIndex: number, totalChunks: number) => void,
+  onDone?: () => void,
+): LongSpeechHandle {
+  const chunks = splitIntoSpeechChunks(text);
+  let cancelled = false;
+  let index = 0;
+
+  function playNext() {
+    if (cancelled) return;
+    if (index >= chunks.length) {
+      onDone?.();
+      return;
+    }
+    onProgress?.(index, chunks.length);
+    void speak(chunks[index], gender, () => {
+      index += 1;
+      playNext();
+    });
+  }
+
+  playNext();
+
+  return {
+    stop() {
+      cancelled = true;
+      stopSpeaking();
+    },
+  };
+}
