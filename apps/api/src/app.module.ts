@@ -11,6 +11,7 @@ import { MoodModule } from "./modules/mood/mood.module";
 import { JournalModule } from "./modules/journal/journal.module";
 import { ActivitiesModule } from "./modules/activities/activities.module";
 import { ChatModule } from "./modules/chat/chat.module";
+import { ImportantDatesModule } from "./modules/important-dates/important-dates.module";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ChatModule } from "./modules/chat/chat.module";
     JournalModule,
     ActivitiesModule,
     ChatModule,
+    ImportantDatesModule,
   ],
   providers: [
     {

@@ -2,8 +2,9 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaService } from "../../prisma/prisma.service";
-import type { ChatConversation, ChatMessage, User } from "@prisma/client";
+import type { ChatConversation, ChatMessage, ImportantDate, User } from "@prisma/client";
 import type { SendMessageDto } from "./dto/send-message.dto";
+import { ImportantDatesService } from "../important-dates/important-dates.service";
 
 // How many of the most recent messages are always sent to the model
 // verbatim. Anything older is folded into a running summary instead, so a
@@ -54,7 +55,67 @@ function buildCycleContextNote(user: User): string | null {
   return `Zusatzinfo (freiwillig angegeben, nur als sanfter Hintergrund, keine Tatsache): Die Nutzerin verfolgt ihren Menstruationszyklus und befindet sich rechnerisch aktuell etwa in der Phase "${phase}" (Tag ${cycleDay} von ${length}). Erwähne das nicht ungefragt und unterstelle keine Ursache für ihre Stimmung – nutze es höchstens im Hinterkopf, falls sie selbst körperliche oder emotionale Beschwerden schildert, die dazu passen könnten.`;
 }
 
-function buildSystemPrompt(user: User, memorySummary: string | null): string {
+// Projects a stored (possibly recurring-yearly) date onto its next
+// occurrence from today, in UTC to match how Prisma reads back a @db.Date
+// column (midnight UTC) regardless of server timezone.
+function nextOccurrenceUtc(date: Date, recurringYearly: boolean): Date {
+  if (!recurringYearly) {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  }
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  let candidate = Date.UTC(now.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  if (candidate < todayUtc) {
+    candidate = Date.UTC(now.getUTCFullYear() + 1, date.getUTCMonth(), date.getUTCDate());
+  }
+  return new Date(candidate);
+}
+
+function daysUntilUtc(target: Date): number {
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((target.getTime() - todayUtc) / MS_PER_DAY);
+}
+
+const IMPORTANT_DATE_LOOKAHEAD_DAYS = 14;
+
+// Own birthday (collected at onboarding) gets a strong, direct instruction
+// to congratulate; other user-entered special days (someone else's
+// birthday, work milestones, anniversaries, ...) get a soft "you may bring
+// this up naturally" hint once they're within the lookahead window, so the
+// AI can frame them as something to look forward to without being pushy
+// or robotic about it.
+function buildImportantDatesNote(user: User, importantDates: ImportantDate[]): string | null {
+  const notes: string[] = [];
+
+  if (user.birthDate) {
+    const now = new Date();
+    if (now.getUTCMonth() === user.birthDate.getUTCMonth() && now.getUTCDate() === user.birthDate.getUTCDate()) {
+      notes.push(
+        "Wichtiger Hinweis: Der Nutzer hat heute Geburtstag! Gratuliere ihm warmherzig und natürlich, am besten gleich zu Beginn deiner Antwort – aber lass es nicht aufgesetzt oder wie eine Standardfloskel wirken.",
+      );
+    }
+  }
+
+  const upcoming = importantDates
+    .map((item) => ({ item, daysUntil: daysUntilUtc(nextOccurrenceUtc(item.date, item.recurringYearly)) }))
+    .filter(({ daysUntil }) => daysUntil >= 0 && daysUntil <= IMPORTANT_DATE_LOOKAHEAD_DAYS)
+    .sort((a, b) => a.daysUntil - b.daysUntil);
+
+  if (upcoming.length > 0) {
+    const lines = upcoming.map(({ item, daysUntil }) => {
+      const when = daysUntil === 0 ? "heute" : daysUntil === 1 ? "morgen" : `in ${daysUntil} Tagen`;
+      return `- ${item.emoji} "${item.title}" (Kategorie: ${item.category}), ${when}`;
+    });
+    notes.push(
+      `Zusatzinfo (vom Nutzer selbst eingetragene besondere Tage, die bald anstehen):\n${lines.join("\n")}\nDu darfst das gelegentlich und beiläufig im Gespräch erwähnen – besonders wenn es gerade thematisch passt oder der Nutzer sich niedergeschlagen fühlt, als etwas Positives, worauf er sich freuen kann. Dräng es aber nicht auf und erwähne es nicht in jeder Nachricht.`,
+    );
+  }
+
+  return notes.length > 0 ? notes.join("\n\n") : null;
+}
+
+function buildSystemPrompt(user: User, memorySummary: string | null, importantDates: ImportantDate[]): string {
   const parts = [SYSTEM_PROMPT];
   if (memorySummary) {
     parts.push(
@@ -63,6 +124,8 @@ function buildSystemPrompt(user: User, memorySummary: string | null): string {
   }
   const cycleNote = buildCycleContextNote(user);
   if (cycleNote) parts.push(cycleNote);
+  const importantDatesNote = buildImportantDatesNote(user, importantDates);
+  if (importantDatesNote) parts.push(importantDatesNote);
   return parts.join("\n\n");
 }
 
@@ -102,6 +165,7 @@ export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly importantDatesService: ImportantDatesService,
   ) {
     this.anthropic = new Anthropic({
       apiKey: this.configService.get<string>("ANTHROPIC_API_KEY"),
@@ -205,11 +269,12 @@ Aktualisiere die Zusammenfassung kompakt (max. ca. 300 Wörter). Behalte nur, wa
 
     const history = [...conversation.messages, userMessage];
     const { summary, activeMessages } = await this.getMemory(conversation, history);
+    const importantDates = await this.importantDatesService.findAllForUser(userId);
 
     const response = await this.anthropic.messages.create({
       model: this.model,
       max_tokens: 1024,
-      system: buildSystemPrompt(user, summary),
+      system: buildSystemPrompt(user, summary, importantDates),
       messages: activeMessages.map((m) => ({
         role: m.role === "assistant" ? "assistant" : "user",
         content: buildContentBlocks(m),

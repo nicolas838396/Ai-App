@@ -34,6 +34,7 @@ model User {
   activityLogs   ActivityLog[]
   conversations  ChatConversation[]
   ttsRequests    TtsRequest[]
+  importantDates ImportantDate[]
 
   @@map("users")
 }
@@ -119,6 +120,25 @@ model ChatMessage {
 
   @@index([conversationId, createdAt])
   @@map("chat_messages")
+}
+
+// A user-entered "special day" (birthday of someone else, work milestone,
+// anniversary, or a fully custom occasion) that the chat companion can
+// proactively bring up as it approaches. Distinct from User.birthDate,
+// which is the user's own birthday collected at onboarding.
+model ImportantDate {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  category        String
+  emoji           String   @default("✨")
+  date            DateTime @db.Date
+  recurringYearly Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@map("important_dates")
 }
 
 // One row per text-to-speech call via ElevenLabs, purely so we can enforce a

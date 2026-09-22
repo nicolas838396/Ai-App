@@ -7,6 +7,7 @@ import {
   MessageCircleHeart,
   NotebookPen,
   LineChart,
+  CalendarHeart,
   Wind,
   LogOut,
   Sparkles,
@@ -21,6 +22,7 @@ const LINKS: { href: string; labelKey: TranslationKey; icon: typeof LayoutDashbo
   { href: "/chat", labelKey: "nav.chat", icon: MessageCircleHeart },
   { href: "/journal", labelKey: "nav.journal", icon: NotebookPen },
   { href: "/statistics", labelKey: "nav.statistics", icon: LineChart },
+  { href: "/calendar", labelKey: "nav.calendar", icon: CalendarHeart },
   { href: "/relax", labelKey: "nav.relax", icon: Wind },
 ];
 
