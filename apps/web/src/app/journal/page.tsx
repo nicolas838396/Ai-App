@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/apiClient";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { EmotionPicker } from "@/components/journal/EmotionPicker";
 import { CategorizedActivityPicker, type Activity, type ActivityLog } from "@/components/journal/CategorizedActivityPicker";
+import { MOOD_EMOJI, isToday } from "@/lib/moodEmoji";
 
 interface MoodEntry {
   id: string;
@@ -24,12 +25,6 @@ interface JournalEntry {
   content: string;
   createdAt: string;
 }
-
-function isToday(isoDate: string) {
-  return isoDate.slice(0, 10) === new Date().toISOString().slice(0, 10);
-}
-
-const MOOD_EMOJI = ["😞", "😕", "😐", "🙂", "😊", "😄", "😁", "🤩", "🥳", "✨"];
 
 export default function JournalPage() {
   const { session, loading: sessionLoading } = useSession({ requireAuth: true });

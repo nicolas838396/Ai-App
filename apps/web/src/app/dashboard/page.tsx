@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { MessageCircleHeart, NotebookPen, LineChart, CalendarHeart, Wind, CircleCheck, CircleAlert, Flame } from "lucide-react";
+import { CircleCheck, CircleAlert, Flame, ArrowRight } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
@@ -10,6 +10,7 @@ import { apiFetch } from "@/lib/apiClient";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { currentMoodStreak, type MoodEntryLite } from "@/lib/moodAnalytics";
+import { moodEmojiForScore, isToday } from "@/lib/moodEmoji";
 
 // A couple of varied options per time-of-day slot so the home screen
 // greeting doesn't feel like the exact same static label every single day —
@@ -33,50 +34,6 @@ interface HealthStatus {
   timestamp: string;
 }
 
-const FEATURE_CARDS: {
-  icon: typeof MessageCircleHeart;
-  titleKey: TranslationKey;
-  descKey: TranslationKey;
-  href: string;
-  color: string;
-}[] = [
-  {
-    icon: MessageCircleHeart,
-    titleKey: "dashboard.card1.title",
-    descKey: "dashboard.card1.desc",
-    href: "/chat",
-    color: "bg-brand-50 text-brand-600",
-  },
-  {
-    icon: NotebookPen,
-    titleKey: "dashboard.card2.title",
-    descKey: "dashboard.card2.desc",
-    href: "/journal",
-    color: "bg-amber-50 text-amber-600",
-  },
-  {
-    icon: LineChart,
-    titleKey: "dashboard.card4.title",
-    descKey: "dashboard.card4.desc",
-    href: "/statistics",
-    color: "bg-calm-50 text-calm-600",
-  },
-  {
-    icon: Wind,
-    titleKey: "dashboard.card3.title",
-    descKey: "dashboard.card3.desc",
-    href: "/relax",
-    color: "bg-sky-50 text-sky-600",
-  },
-  {
-    icon: CalendarHeart,
-    titleKey: "dashboard.card5.title",
-    descKey: "dashboard.card5.desc",
-    href: "/calendar",
-    color: "bg-rose-50 text-rose-600",
-  },
-];
-
 export default function DashboardPage() {
   const { session, loading: sessionLoading } = useSession({ requireAuth: true });
   const { t } = useLanguage();
@@ -87,7 +44,7 @@ export default function DashboardPage() {
   // safely on the client — avoids a hydration mismatch from using
   // Date.getHours() during the static prerender.
   const [greetingKey, setGreetingKey] = useState<TranslationKey>("dashboard.greeting");
-  const [moodStreak, setMoodStreak] = useState<number | null>(null);
+  const [moodEntries, setMoodEntries] = useState<MoodEntryLite[] | null>(null);
 
   useEffect(() => {
     setGreetingKey(pickGreetingKey());
@@ -105,9 +62,14 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!session) return;
     apiFetch<MoodEntryLite[]>("/mood")
-      .then((entries) => setMoodStreak(currentMoodStreak(entries)))
+      .then(setMoodEntries)
       .catch(() => {});
   }, [session]);
+
+  const moodStreak = useMemo(() => (moodEntries ? currentMoodStreak(moodEntries) : null), [moodEntries]);
+  // The API returns newest-first, so the first match for today is also the
+  // most recent mood logged today (if someone logged more than once).
+  const todaysMood = useMemo(() => moodEntries?.find((e) => isToday(e.createdAt)) ?? null, [moodEntries]);
 
   if (sessionLoading || !session) {
     return <FullscreenLoader />;
@@ -120,46 +82,46 @@ export default function DashboardPage() {
         <h1 className="text-2xl">{t(greetingKey)}</h1>
         <p className="mt-1 text-slate-500">{t("dashboard.subtitle")}</p>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <div
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-              error
-                ? "bg-red-50 text-red-600"
-                : health
-                  ? "bg-brand-50 text-brand-700"
-                  : "bg-slate-100 text-slate-400"
-            }`}
-          >
-            {error ? (
-              <CircleAlert className="h-3.5 w-3.5" />
-            ) : (
-              <CircleCheck className="h-3.5 w-3.5" />
-            )}
-            {error ?? (health ? t("dashboard.allConnected", { time: new Date(health.timestamp).toLocaleTimeString() }) : t("dashboard.checkingConnection"))}
+        <div
+          className={`mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+            error
+              ? "bg-red-50 text-red-600"
+              : health
+                ? "bg-brand-50 text-brand-700"
+                : "bg-slate-100 text-slate-400"
+          }`}
+        >
+          {error ? (
+            <CircleAlert className="h-3.5 w-3.5" />
+          ) : (
+            <CircleCheck className="h-3.5 w-3.5" />
+          )}
+          {error ?? (health ? t("dashboard.allConnected", { time: new Date(health.timestamp).toLocaleTimeString() }) : t("dashboard.checkingConnection"))}
+        </div>
+
+        <section className="mt-8 rounded-3xl bg-gradient-to-br from-brand-50 via-white to-calm-50 p-8 text-center shadow-soft ring-1 ring-black/5">
+          <div key={todaysMood ? todaysMood.score : "none"} className="tap-pop mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white text-5xl shadow-soft">
+            {todaysMood ? moodEmojiForScore(todaysMood.score) : "❓"}
           </div>
+          <p className="mt-4 text-sm font-semibold text-slate-600">
+            {todaysMood ? t("dashboard.todayMoodLogged") : t("dashboard.todayMoodPrompt")}
+          </p>
+          {!todaysMood && (
+            <Link
+              href="/journal"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600"
+            >
+              {t("dashboard.logMoodCta")}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
           {moodStreak !== null && moodStreak > 0 && (
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-              <Flame className="h-3.5 w-3.5" />
+            <div className="mx-auto mt-5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-4 py-1.5 text-sm font-semibold text-amber-700">
+              <Flame className="h-4 w-4 animate-pulse" />
               {t("dashboard.streakChip", { days: moodStreak })}
             </div>
           )}
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURE_CARDS.map((card) => (
-            <Link
-              key={card.titleKey}
-              href={card.href}
-              className="group rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-glow"
-            >
-              <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.color}`}>
-                <card.icon className="h-5 w-5" />
-              </span>
-              <h2 className="mt-4 font-bold text-slate-800">{t(card.titleKey)}</h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{t(card.descKey)}</p>
-            </Link>
-          ))}
-        </div>
+        </section>
       </main>
     </>
   );
