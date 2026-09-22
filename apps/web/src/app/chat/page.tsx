@@ -13,6 +13,17 @@ import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsSpeec
 import { isSttSupported, createSpeechRecognizer, type SpeechLang } from "@/lib/speechRecognition";
 import { getVoiceGenderPreference, setVoiceGenderPreference, type VoiceGender } from "@/lib/preferences";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n/translations";
+
+// Tappable conversation starters shown on an empty chat — gives people
+// something to tap instead of a blank page staring back, without forcing
+// them to think of an opener themselves.
+const CONVERSATION_STARTER_KEYS: TranslationKey[] = [
+  "chat.starter1",
+  "chat.starter2",
+  "chat.starter3",
+  "chat.starter4",
+];
 
 interface ChatMessage {
   id: string;
@@ -355,9 +366,24 @@ export default function ChatPage() {
         <div className="mt-4 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
           {loadingHistory && <p className="text-sm text-slate-400">{t("chat.loadingHistory")}</p>}
           {!loadingHistory && messages.length === 0 && (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-slate-400">
-              <Sparkles className="h-8 w-8 text-brand-200" />
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-slate-400">
+              <div className="relative flex h-16 w-16 items-center justify-center">
+                <span className="celebration-glow absolute inset-0 rounded-full bg-brand-400/40 blur-lg" />
+                <Sparkles className="gentle-float relative h-9 w-9 text-brand-400" />
+              </div>
               <p className="max-w-xs text-sm">{t("chat.emptyState")}</p>
+              <div className="mt-1 flex max-w-sm flex-wrap justify-center gap-2">
+                {CONVERSATION_STARTER_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setInput(t(key))}
+                    className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-soft transition hover:border-brand-200 hover:text-brand-600"
+                  >
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {messages.map((message) => (
