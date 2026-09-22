@@ -5,6 +5,7 @@ import { Send, Sparkles, User, Image as ImageIcon, Mic, Square, Volume2, VolumeX
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { Chip } from "@/components/Chip";
+import { DuskGlow } from "@/components/DuskGlow";
 import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
 import { resizeImageForUpload } from "@/lib/imageResize";
@@ -530,38 +531,29 @@ export default function ChatPage() {
       )}
 
       {voiceModeOpen && (
-        <div className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-slate-900/95 px-6 text-center">
-          <div className="relative flex h-40 w-40 items-center justify-center">
-            <span
-              className={`absolute inset-0 rounded-full bg-brand-500/30 ${
-                voiceStatus === "listening" ? "animate-ping" : voiceStatus === "speaking" ? "animate-pulse" : ""
-              }`}
-            />
-            <span
-              className={`flex h-28 w-28 items-center justify-center rounded-full text-white shadow-glow ${
-                voiceStatus === "thinking" ? "animate-pulse bg-calm-500" : "bg-brand-500"
-              }`}
-            >
-              {voiceStatus === "listening" && <Mic className="h-10 w-10" />}
-              {voiceStatus === "thinking" && <Sparkles className="h-10 w-10" />}
-              {voiceStatus === "speaking" && <Volume2 className="h-10 w-10" />}
-            </span>
+        <div className="fixed inset-0 z-30 flex flex-col items-center justify-center px-6 text-center">
+          <DuskGlow state={voiceStatus} />
+
+          <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm">
+            {voiceStatus === "listening" && <Mic className="h-9 w-9" />}
+            {voiceStatus === "thinking" && <Sparkles className="h-9 w-9" />}
+            {voiceStatus === "speaking" && <Volume2 className="h-9 w-9" />}
           </div>
 
-          <p className="mt-8 text-lg font-semibold text-white">
+          <p className="relative z-10 mt-8 text-lg font-semibold text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.3)]">
             {voiceStatus === "listening" && t("chat.voiceModeListening")}
             {voiceStatus === "thinking" && t("chat.voiceModeThinking")}
             {voiceStatus === "speaking" && t("chat.voiceModeSpeaking")}
           </p>
-          <p className="mt-2 min-h-[1.5rem] max-w-sm text-sm text-slate-300">
+          <p className="relative z-10 mt-2 min-h-[1.5rem] max-w-sm text-sm text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.3)]">
             {voiceTranscript || (voiceStatus === "listening" ? t("chat.voiceModeHint") : "")}
           </p>
-          {voiceError && <p className="mt-2 max-w-sm text-sm text-red-400">{voiceError}</p>}
+          {voiceError && <p className="relative z-10 mt-2 max-w-sm text-sm text-red-200">{voiceError}</p>}
 
           <button
             type="button"
             onClick={closeVoiceMode}
-            className="mt-10 flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+            className="relative z-10 mt-10 flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
           >
             <X className="h-4 w-4" />
             {t("chat.voiceModeEnd")}

@@ -220,3 +220,126 @@ textarea {
 .gentle-float {
   animation: gentle-float 3s ease-in-out infinite;
 }
+
+/* Dusk Glow — the figure-free, reactive backdrop for real-time voice chat.
+   A dark-blue-to-warm-amber gradient (an inverted sunset) that breathes on
+   its own and pulses faster/stronger while the assistant is speaking, so
+   the visual itself carries the conversation's rhythm instead of a mascot. */
+
+@keyframes dusk-sky-shift {
+  0%,
+  100% {
+    background-position: 50% 0%, 50% 100%;
+  }
+  50% {
+    background-position: 50% 8%, 50% 92%;
+  }
+}
+
+.dusk-glow-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    #131a33 0%,
+    #1e2148 16%,
+    #3a2760 34%,
+    #6b3268 50%,
+    #a5375c 64%,
+    #d65b49 78%,
+    #f0913f 90%,
+    #f9c15e 100%
+  );
+  background-size: 100% 130%;
+  animation: dusk-sky-shift 14s ease-in-out infinite;
+}
+
+.dusk-glow-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(50px);
+  mix-blend-mode: screen;
+}
+
+@keyframes dusk-drift-a {
+  0%,
+  100% {
+    transform: translate(-10px, 0px);
+  }
+  50% {
+    transform: translate(18px, -22px);
+  }
+}
+
+.dusk-glow-blob-a {
+  animation: dusk-drift-a 16s ease-in-out infinite;
+}
+
+@keyframes dusk-drift-b {
+  0%,
+  100% {
+    transform: translate(12px, 0px);
+  }
+  50% {
+    transform: translate(-16px, 20px);
+  }
+}
+
+.dusk-glow-blob-b {
+  animation: dusk-drift-b 18s ease-in-out infinite;
+}
+
+@keyframes dusk-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.12);
+  }
+}
+
+@keyframes dusk-glow-pulse-thinking {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(1.02);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.16);
+  }
+}
+
+@keyframes dusk-glow-pulse-active {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: translateX(-50%) scale(1.05);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.32);
+  }
+}
+
+.dusk-glow-horizon {
+  position: absolute;
+  left: 50%;
+  border-radius: 9999px;
+  background: #ffc15e;
+  filter: blur(50px);
+  mix-blend-mode: screen;
+  animation: dusk-glow-pulse 7s ease-in-out infinite;
+}
+
+.dusk-glow-horizon-thinking {
+  animation: dusk-glow-pulse-thinking 2.4s ease-in-out infinite;
+}
+
+.dusk-glow-horizon-active {
+  animation: dusk-glow-pulse-active 1.5s ease-in-out infinite;
+}
