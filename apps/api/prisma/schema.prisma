@@ -46,6 +46,11 @@ model MoodEntry {
   score     Int
   note      String?
   tags      String[] @default([])
+  // What's behind the mood (money, tiredness, stress, family, ...) —
+  // separate from `tags`, which holds the emotion-picker's feeling IDs
+  // (joy, gratitude, ...). Keeping the two apart lets Statistics correlate
+  // mood against causes without conflating "what I feel" and "why".
+  reasons   String[] @default([])
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])

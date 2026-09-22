@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { MoodTrendChart } from "@/components/journal/MoodTrendChart";
 import { MoodCalendar } from "@/components/journal/MoodCalendar";
 import { ActivityCorrelation } from "@/components/journal/ActivityCorrelation";
+import { MoodReasonCorrelation } from "@/components/journal/MoodReasonCorrelation";
 import { WeekAndStreakStats } from "@/components/journal/WeekAndStreakStats";
 import { AchievementsSection } from "@/components/achievements/AchievementsSection";
 import { AchievementCelebrationModal } from "@/components/achievements/AchievementCelebrationModal";
@@ -26,6 +27,7 @@ interface MoodEntry {
   id: string;
   score: number;
   note?: string | null;
+  reasons?: string[];
   createdAt: string;
 }
 
@@ -122,6 +124,10 @@ export default function StatisticsPage() {
 
         <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
           <ActivityCorrelation />
+        </section>
+
+        <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <MoodReasonCorrelation entries={moodHistory} />
         </section>
 
         <section className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">

@@ -338,16 +338,6 @@ export default function ChatPage() {
             <p className="text-xs text-slate-500">{t("chat.disclaimer")}</p>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
-            {sttSupported && (
-              <button
-                type="button"
-                onClick={openVoiceMode}
-                title={t("chat.startVoiceMode")}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-sand-100 text-slate-500 transition hover:text-slate-700"
-              >
-                <Headphones className="h-4 w-4" />
-              </button>
-            )}
             {ttsSupported && (
               <button
                 type="button"
@@ -480,6 +470,16 @@ export default function ChatPage() {
           >
             <ImageIcon className="h-4 w-4" />
           </button>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={listening ? t("chat.placeholderListening") : t("chat.placeholderDefault")}
+            className="min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm shadow-soft"
+          />
+          {/* Voice controls sit to the right of the input, closest-to-furthest:
+              mic records a voice message (transcribed into the text field to
+              review before sending), headphones starts a fully hands-free
+              voice conversation — mirroring Claude's own chat composer layout. */}
           {sttSupported && (
             <button
               type="button"
@@ -492,16 +492,20 @@ export default function ChatPage() {
               <Mic className="h-4 w-4" />
             </button>
           )}
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={listening ? t("chat.placeholderListening") : t("chat.placeholderDefault")}
-            className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm shadow-soft"
-          />
+          {sttSupported && (
+            <button
+              type="button"
+              onClick={openVoiceMode}
+              title={t("chat.startVoiceMode")}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-soft transition hover:text-slate-700"
+            >
+              <Headphones className="h-4 w-4" />
+            </button>
+          )}
           <button
             type="submit"
             disabled={sending || (!input.trim() && !pendingImage)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition hover:bg-brand-600 disabled:opacity-50"
           >
             <Send className="h-4 w-4" />
           </button>

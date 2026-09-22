@@ -8,6 +8,7 @@ import { useSession } from "@/lib/useSession";
 import { apiFetch } from "@/lib/apiClient";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { EmotionPicker } from "@/components/journal/EmotionPicker";
+import { ReasonPicker } from "@/components/journal/ReasonPicker";
 import { CategorizedActivityPicker, type Activity, type ActivityLog } from "@/components/journal/CategorizedActivityPicker";
 import { MOOD_EMOJI, isToday } from "@/lib/moodEmoji";
 
@@ -16,6 +17,7 @@ interface MoodEntry {
   score: number;
   note?: string | null;
   tags?: string[];
+  reasons?: string[];
   createdAt: string;
 }
 
@@ -36,6 +38,7 @@ export default function JournalPage() {
 
   const [moodScore, setMoodScore] = useState(5);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [moodNote, setMoodNote] = useState("");
   const [moodSaving, setMoodSaving] = useState(false);
   const [moodSavedAt, setMoodSavedAt] = useState<string | null>(null);
@@ -62,6 +65,10 @@ export default function JournalPage() {
 
   function toggleEmotion(id: string) {
     setSelectedEmotions((prev) => (prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]));
+  }
+
+  function toggleReason(id: string) {
+    setSelectedReasons((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
   }
 
   async function toggleActivity(activity: Activity) {
@@ -102,11 +109,17 @@ export default function JournalPage() {
     try {
       const entry = await apiFetch<MoodEntry>("/mood", {
         method: "POST",
-        body: JSON.stringify({ score: moodScore, note: moodNote || undefined, tags: selectedEmotions }),
+        body: JSON.stringify({
+          score: moodScore,
+          note: moodNote || undefined,
+          tags: selectedEmotions,
+          reasons: selectedReasons,
+        }),
       });
       setMoodHistory((prev) => [entry, ...prev]);
       setMoodNote("");
       setSelectedEmotions([]);
+      setSelectedReasons([]);
       setMoodSavedAt(new Date().toLocaleTimeString());
     } catch {
       setMoodError(t("journal.moodSaveError"));
@@ -186,6 +199,12 @@ export default function JournalPage() {
               placeholder={t("journal.moodNotePlaceholder")}
               className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"
             />
+
+            <div>
+              <p className="mb-2 text-xs font-semibold text-slate-500">{t("journal.reasonQuestion")}</p>
+              <ReasonPicker selected={selectedReasons} onToggle={toggleReason} />
+            </div>
+
             <div className="flex items-center gap-3">
               <button
                 type="submit"

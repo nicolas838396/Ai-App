@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CircleCheck, CircleAlert, Flame, ArrowRight } from "lucide-react";
+import { CircleCheck, CircleAlert, Flame, ArrowRight, Sparkles } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
 import { FullscreenLoader } from "@/components/FullscreenLoader";
 import { useSession } from "@/lib/useSession";
@@ -11,6 +11,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { currentMoodStreak, type MoodEntryLite } from "@/lib/moodAnalytics";
 import { moodEmojiForScore, isToday } from "@/lib/moodEmoji";
+import { pickDailyStatementKey } from "@/lib/dailyStatement";
 
 // A couple of varied options per time-of-day slot so the home screen
 // greeting doesn't feel like the exact same static label every single day —
@@ -44,10 +45,12 @@ export default function DashboardPage() {
   // safely on the client — avoids a hydration mismatch from using
   // Date.getHours() during the static prerender.
   const [greetingKey, setGreetingKey] = useState<TranslationKey>("dashboard.greeting");
+  const [statementKey, setStatementKey] = useState<TranslationKey | null>(null);
   const [moodEntries, setMoodEntries] = useState<MoodEntryLite[] | null>(null);
 
   useEffect(() => {
     setGreetingKey(pickGreetingKey());
+    setStatementKey(pickDailyStatementKey());
   }, []);
 
   useEffect(() => {
@@ -99,7 +102,14 @@ export default function DashboardPage() {
           {error ?? (health ? t("dashboard.allConnected", { time: new Date(health.timestamp).toLocaleTimeString() }) : t("dashboard.checkingConnection"))}
         </div>
 
-        <section className="mt-8 rounded-3xl bg-gradient-to-br from-brand-50 via-white to-calm-50 p-8 text-center shadow-soft ring-1 ring-black/5">
+        {statementKey && (
+          <div className="mt-5 flex items-start gap-3 rounded-2xl bg-gradient-to-r from-calm-500 to-brand-500 p-5 text-white shadow-glow">
+            <Sparkles className="mt-0.5 h-5 w-5 shrink-0" />
+            <p className="text-base font-semibold leading-snug">{t(statementKey)}</p>
+          </div>
+        )}
+
+        <section className="mt-6 rounded-3xl bg-gradient-to-br from-brand-50 via-white to-calm-50 p-8 text-center shadow-soft ring-1 ring-black/5">
           <div key={todaysMood ? todaysMood.score : "none"} className="tap-pop mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white text-5xl shadow-soft">
             {todaysMood ? moodEmojiForScore(todaysMood.score) : "❓"}
           </div>

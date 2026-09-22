@@ -16,4 +16,10 @@ export class CreateMoodEntryDto {
   @ArrayMaxSize(10)
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsString({ each: true })
+  reasons?: string[];
 }

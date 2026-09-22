@@ -13,6 +13,7 @@ export class MoodService {
         score: dto.score,
         note: dto.note,
         tags: dto.tags ?? [],
+        reasons: dto.reasons ?? [],
       },
     });
   }
