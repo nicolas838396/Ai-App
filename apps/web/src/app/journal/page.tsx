@@ -45,11 +45,15 @@ export default function JournalPage() {
   const [moodSaving, setMoodSaving] = useState(false);
   const [moodSavedAt, setMoodSavedAt] = useState<string | null>(null);
   const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
+  const [moodError, setMoodError] = useState<string | null>(null);
+  const [moodSlow, setMoodSlow] = useState(false);
 
   const [journalTitle, setJournalTitle] = useState("");
   const [journalContent, setJournalContent] = useState("");
   const [journalSaving, setJournalSaving] = useState(false);
   const [journalHistory, setJournalHistory] = useState<JournalEntry[]>([]);
+  const [journalError, setJournalError] = useState<string | null>(null);
+  const [journalSlow, setJournalSlow] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -98,6 +102,8 @@ export default function JournalPage() {
   async function handleMoodSubmit(event: FormEvent) {
     event.preventDefault();
     setMoodSaving(true);
+    setMoodError(null);
+    const slowTimer = setTimeout(() => setMoodSlow(true), 4000);
     try {
       const entry = await apiFetch<MoodEntry>("/mood", {
         method: "POST",
@@ -107,7 +113,11 @@ export default function JournalPage() {
       setMoodNote("");
       setSelectedEmotions([]);
       setMoodSavedAt(new Date().toLocaleTimeString());
+    } catch {
+      setMoodError(t("journal.moodSaveError"));
     } finally {
+      clearTimeout(slowTimer);
+      setMoodSlow(false);
       setMoodSaving(false);
     }
   }
@@ -116,6 +126,8 @@ export default function JournalPage() {
     event.preventDefault();
     if (!journalContent.trim()) return;
     setJournalSaving(true);
+    setJournalError(null);
+    const slowTimer = setTimeout(() => setJournalSlow(true), 4000);
     try {
       const entry = await apiFetch<JournalEntry>("/journal", {
         method: "POST",
@@ -124,7 +136,11 @@ export default function JournalPage() {
       setJournalHistory((prev) => [entry, ...prev]);
       setJournalTitle("");
       setJournalContent("");
+    } catch {
+      setJournalError(t("journal.entrySaveError"));
     } finally {
+      clearTimeout(slowTimer);
+      setJournalSlow(false);
       setJournalSaving(false);
     }
   }
@@ -183,10 +199,12 @@ export default function JournalPage() {
               >
                 {t("journal.saveMood")}
               </button>
-              {moodSavedAt && (
+              {moodSavedAt && !moodSaving && (
                 <span className="text-xs text-slate-400">{t("journal.savedAt", { time: moodSavedAt })}</span>
               )}
             </div>
+            {moodSlow && <p className="text-xs text-amber-600">{t("journal.slowHint")}</p>}
+            {moodError && <p className="text-xs text-red-500">{moodError}</p>}
           </form>
 
           {moodHistory.length > 0 && (
@@ -232,6 +250,8 @@ export default function JournalPage() {
             >
               {t("journal.saveEntry")}
             </button>
+            {journalSlow && <p className="text-xs text-amber-600">{t("journal.slowHint")}</p>}
+            {journalError && <p className="text-xs text-red-500">{journalError}</p>}
           </form>
 
           {journalHistory.length > 0 && (

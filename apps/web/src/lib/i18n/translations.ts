@@ -99,6 +99,9 @@ export const translations = {
     "journal.weatherDetectButton": "Wetter automatisch erkennen",
     "journal.weatherDetecting": "Wird erkannt…",
     "journal.weatherDetectError": "Wetter konnte nicht erkannt werden.",
+    "journal.moodSaveError": "Deine Stimmung konnte nicht gespeichert werden. Bitte versuch es erneut.",
+    "journal.entrySaveError": "Dein Eintrag konnte nicht gespeichert werden. Bitte versuch es erneut.",
+    "journal.slowHint": "Das dauert gerade länger als sonst – unser Server wacht möglicherweise gerade erst auf. Bitte kurz warten.",
 
     "emotion.joy": "Freude",
     "emotion.gratitude": "Dankbarkeit",
@@ -473,6 +476,9 @@ export const translations = {
     "journal.weatherDetectButton": "Detect weather automatically",
     "journal.weatherDetecting": "Detecting…",
     "journal.weatherDetectError": "Couldn't detect the weather.",
+    "journal.moodSaveError": "Your mood couldn't be saved. Please try again.",
+    "journal.entrySaveError": "Your entry couldn't be saved. Please try again.",
+    "journal.slowHint": "This is taking longer than usual – our server may just be waking up. Please hold on a moment.",
 
     "emotion.joy": "Joy",
     "emotion.gratitude": "Gratitude",
